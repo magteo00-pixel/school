@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="교육과 독서, 학교도서관에 관심을 두고 배우고 기록하는 조수현의 개인 홈페이지입니다." />
+  <title>조수현 | About & Projects</title>
+  <style>
+    :root { color-scheme: light; --ink:#252d29; --muted:#69746d; --paper:#f7f8f4; --surface:#fff; --line:#e0e6dd; --accent:#47755d; --pale:#eaf1e8; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family: "Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height:1.75; word-break:keep-all; }
+    a { color:inherit; }
+    .shell { width:min(100% - 40px, 980px); margin:auto; }
+    header { border-bottom:1px solid var(--line); background:rgba(247,248,244,.95); }
+    .nav { display:flex; align-items:center; justify-content:space-between; min-height:76px; gap:16px; }
+    .logo { text-decoration:none; font-size:1.03rem; font-weight:800; letter-spacing:-.04em; }
+    nav { display:flex; flex-wrap:wrap; gap:clamp(12px,3vw,28px); }
+    nav a { text-decoration:none; font-size:.88rem; color:var(--muted); }
+    nav a:hover, a:focus-visible { color:var(--accent); }
+    .hero { padding:112px 0 94px; display:grid; grid-template-columns:1fr 190px; align-items:center; gap:38px; }
+    .eyebrow { display:inline-flex; border:1px solid #cdded0; border-radius:30px; background:var(--pale); padding:5px 13px; font-size:.79rem; font-weight:700; color:var(--accent); letter-spacing:.04em; }
+    h1 { font-size:clamp(2.8rem,7vw,5.4rem); line-height:1.16; letter-spacing:-.075em; margin:23px 0 19px; }
+    .hero p { max-width:630px; margin:0; font-size:clamp(1.03rem,2vw,1.2rem); color:#58675d; }
+    .hero-art { width:180px; height:180px; border-radius:42% 58% 63% 37% / 46% 39% 61% 54%; background:#deeadf; display:grid; place-items:center; color:var(--accent); transform:rotate(-8deg); }
+    .hero-art svg { width:94px; height:94px; transform:rotate(8deg); }
+    .section { padding:42px 0 68px; border-top:1px solid var(--line); }
+    .section-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:24px; }
+    .section h2 { margin:0; font-size:1.7rem; letter-spacing:-.05em; }
+    .section-num { font-family:monospace; font-size:.82rem; color:#92a097; }
+    .intro { font-size:1.08rem; max-width:780px; margin:0; color:#526057; }
+    .chips { display:flex; flex-wrap:wrap; gap:10px; margin-top:24px; }
+    .chip { border:1px solid #d6e3d7; border-radius:99px; background:var(--pale); color:#426d54; font-size:.88rem; padding:6px 14px; }
+    .activity-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+    .activity { background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:25px 22px; }
+    .activity .num { color:var(--accent); font-weight:700; font-size:.82rem; }
+    .activity h3 { margin:13px 0 8px; font-size:1.09rem; letter-spacing:-.03em; }
+    .activity p { margin:0; font-size:.92rem; color:var(--muted); }
+    .project { display:flex; gap:22px; align-items:center; justify-content:space-between; padding:27px 29px; background:var(--surface); border:1px solid var(--line); border-radius:20px; }
+    .project .type { font-size:.78rem; color:var(--accent); font-weight:700; }
+    .project h3 { margin:5px 0 5px; font-size:1.21rem; }
+    .project p { margin:0; color:var(--muted); font-size:.91rem; }
+    .project-link { flex:none; text-decoration:none; border:1px solid #bfd4c5; border-radius:12px; padding:10px 16px; font-weight:700; color:var(--accent); font-size:.9rem; }
+    .project-link:hover { background:var(--pale); }
+    .contact { background:#eaf0e9; border-radius:24px; padding:31px 35px; }
+    .contact h2 { margin:0 0 8px; }
+    .contact p { margin:0 0 17px; color:#5e6b60; }
+    .email { font-weight:750; font-size:clamp(1rem,2.7vw,1.4rem); color:#345d46; overflow-wrap:anywhere; text-decoration-thickness:1px; text-underline-offset:5px; }
+    footer { padding:32px 0 42px; color:#89938b; font-size:.8rem; }
+    @media (max-width:700px) { .hero { grid-template-columns:1fr; padding:77px 0 65px; } .hero-art { grid-row:1; width:115px; height:115px; border-radius:42%; } .hero-art svg { width:64px; height:64px; } .activity-grid { grid-template-columns:1fr; } .project { align-items:flex-start; flex-direction:column; padding:24px; } .nav { min-height:68px; } .contact { padding:26px 23px; } }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="shell nav">
+      <a href="#top" class="logo" aria-label="조수현 홈페이지 상단으로 이동">SUHYEON JO<span style="color:var(--accent)">.</span></a>
+      <nav aria-label="주 메뉴">
+        <a href="#about">소개</a><a href="#activities">활동</a><a href="#projects">프로젝트</a><a href="#contact">연락처</a>
+      </nav>
+    </div>
+  </header>
+  <main id="top" class="shell">
+    <section class="hero" aria-labelledby="main-heading">
+      <div>
+        <span class="eyebrow">HELLO, I'M SUHYEON</span>
+        <h1 id="main-heading">안녕하세요,<br />조수현입니다.</h1>
+        <p>책을 읽고 생각을 나누는 일을 좋아합니다. 교육과 학교도서관의 가능성을 탐구하며, 배운 것을 일상의 경험과 연결해 나가고 있습니다.</p>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M50 25C38 15 23 17 13 21V76C27 71 39 72 50 80C61 72 73 71 87 76V21C77 17 62 15 50 25Z" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/><path d="M50 25V80M23 32C31 29 38 31 42 34M58 34C65 30 73 29 79 32M23 43C31 40 38 42 42 45M58 45C65 41 73 40 79 43" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+      </div>
+    </section>
+    <section class="section" id="about" aria-labelledby="about-heading">
+      <div class="section-head"><h2 id="about-heading">저를 소개합니다</h2><span class="section-num">01 / ABOUT</span></div>
+      <p class="intro">교육을 공부하는 대학생으로, 특히 독서와 학교도서관을 통한 배움에 관심이 있습니다. 책과 자료가 새로운 질문을 만들고, 그 질문이 사람의 생각을 넓히는 과정을 중요하게 여깁니다. 익숙한 주제도 여러 관점에서 살펴보고, 직접 고민한 내용을 글로 정리하는 것을 좋아합니다.</p>
+      <div class="chips" aria-label="관심사"><span class="chip">독서</span><span class="chip">교육</span><span class="chip">학교도서관</span><span class="chip">글쓰기와 기록</span></div>
+    </section>
+    <section class="section" id="activities" aria-labelledby="activities-heading">
+      <div class="section-head"><h2 id="activities-heading">관심사와 주요 활동</h2><span class="section-num">02 / ACTIVITIES</span></div>
+      <div class="activity-grid">
+        <article class="activity"><span class="num">01</span><h3>독서와 글쓰기</h3><p>다양한 주제의 글을 읽고 쟁점을 정리하며, 제 생각과 근거를 담은 글을 작성합니다.</p></article>
+        <article class="activity"><span class="num">02</span><h3>교육 현장 경험</h3><p>교육실습을 통해 학교 현장을 경험하고, 학생의 배움과 교육 환경에 대해 고민했습니다.</p></article>
+        <article class="activity"><span class="num">03</span><h3>학교도서관 탐구</h3><p>학교도서관의 운영과 장서 관리, 정보활용교육 및 독서교육 활동을 공부하고 있습니다.</p></article>
+      </div>
+    </section>
+    <section class="section" id="projects" aria-labelledby="projects-heading">
+      <div class="section-head"><h2 id="projects-heading">프로젝트</h2><span class="section-num">03 / PROJECTS</span></div>
+      <article class="project">
+        <div><span class="type">PERSONAL PROJECT · 01</span><h3>오늘의 할 일 관리 앱</h3><p>하루의 할 일을 한눈에 확인하고 정리하기 위한 개인 프로젝트입니다.</p></div>
+        <!-- 실제 프로젝트 주소가 생기면 아래 href의 project-url.html을 해당 URL로 교체하세요. -->
+        <a class="project-link" href="project-url.html" data-placeholder-link="true" aria-label="오늘의 할 일 관리 앱 프로젝트 링크 (주소 등록 필요)">프로젝트 보기 ↗</a>
+      </article>
+    </section>
+    <section class="section" id="contact" aria-labelledby="contact-heading">
+      <div class="contact"><h2 id="contact-heading">연락하기</h2><p>이야기를 나누고 싶다면 이메일로 편하게 연락해 주세요.</p><a class="email" href="mailto:sallyryan00@gmail.com">sallyryan00@gmail.com ↗</a></div>
+    </section>
+  </main>
+  <footer class="shell">© 2026 조수현. 읽고, 배우고, 기록합니다.</footer>
+  <script>
+    // 미등록 링크가 없는 페이지로 이동하지 않도록 안내합니다.
+    document.querySelectorAll('[data-placeholder-link]').forEach(function (link) {
+      link.addEventListener('click', function (event) {
+        event.preventDefault();
+        window.alert('프로젝트 주소가 아직 등록되지 않았습니다. index.html의 프로젝트 링크 주소를 변경해 주세요.');
+      });
+    });
+  </script>
+</body>
+</html>
