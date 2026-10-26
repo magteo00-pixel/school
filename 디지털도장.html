@@ -36,4 +36,195 @@
                 <!-- '인' 글자 추가 옵션 -->
                 <div class="mb-5 flex items-center gap-2">
                     <input type="checkbox" id="addIn" checked class="w-4 h-4 text-red-600 rounded border-slate-300 focus:ring-red-500 cursor-pointer">
-                    <label for="addIn" class="text-sm font-medium text-slate-700 cursor-pointer">끝에 '인' 자 자동으로 붙이기 (예:
+                    <label for="addIn" class="text-sm font-medium text-slate-700 cursor-pointer">끝에 '인' 자 자동으로 붙이기 (예: 홍길동인)</label>
+                </div>
+
+                <!-- 폰트 선택 -->
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">한글 글씨체 선택</label>
+                    <select id="fontSelect" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-none bg-white text-sm">
+                        <option value="font-myeongjo">나눔명조 (전통 공문서형)</option>
+                        <option value="font-batang">고운바탕 (단아한 서체)</option>
+                        <option value="font-gothic">나눔고딕 (깔끔한 고딕형)</option>
+                        <option value="font-black">블랙한산스 (굵고 강렬한 서체)</option>
+                        <option value="font-gaegu">개구체 (손글씨 필기체)</option>
+                    </select>
+                </div>
+
+                <!-- 테두리 모양 -->
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">도장 외곽선 모양</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" onclick="setShape('circle')" id="btnCircle" class="py-2.5 px-4 border rounded-xl font-medium text-sm transition bg-red-50 border-red-500 text-red-700 shadow-sm">원형 도장</button>
+                        <button type="button" onclick="setShape('square')" id="btnSquare" class="py-2.5 px-4 border rounded-xl font-medium text-sm transition bg-white border-slate-300 text-slate-700">사각형 도장</button>
+                    </div>
+                </div>
+
+                <!-- 레이아웃 방식 -->
+                <div class="mb-5" id="layoutOptionContainer">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">글자 배치 방식</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" onclick="setLayout('grid')" id="btnLayoutGrid" class="py-2.5 px-4 border rounded-xl font-medium text-sm transition bg-red-50 border-red-500 text-red-700 shadow-sm">2x2 격자 (전통형)</button>
+                        <button type="button" onclick="setLayout('line')" id="btnLayoutLine" class="py-2.5 px-4 border rounded-xl font-medium text-sm transition bg-white border-slate-300 text-slate-700">한 줄 배치</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 안내 문구 -->
+            <div class="bg-red-50 border border-red-100 rounded-xl p-3.5 text-xs text-red-600 mt-4 leading-relaxed">
+                💡 다운로드된 PNG 파일은 <strong>배경이 투명</strong>하므로 한글 문서, 워드, PDF, 학급서류 등에 바로 삽입할 수 있습니다.
+            </div>
+        </div>
+
+        <!-- 우측: 미리보기 및 다운로드 패널 -->
+        <div class="p-6 md:p-8 flex flex-col items-center justify-between bg-slate-50/50">
+            <div class="w-full text-center flex flex-col items-center">
+                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">도장 미리보기 (투명 배경)</h2>
+                
+                <!-- 반응형 캔버스 박스 -->
+                <div class="relative inline-flex items-center justify-center p-6 sm:p-8 bg-[linear-gradient(45deg,#cbd5e1_25%,transparent_25%),linear-gradient(-45deg,#cbd5e1_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#cbd5e1_75%),linear-gradient(-45deg,transparent_75%,#cbd5e1_75%)] bg-[size:16px_16px] bg-[position:0_0,0_8px,8px_-8px,-8px_0px] rounded-2xl shadow-inner border border-slate-200 mb-6 w-full max-w-[260px] aspect-square">
+                    <canvas id="sealCanvas" width="300" height="300" class="w-full h-full object-contain drop-shadow-md"></canvas>
+                </div>
+            </div>
+
+            <!-- 다운로드 버튼 -->
+            <div class="w-full mt-4">
+                <button onclick="downloadSeal()" class="w-full bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2 text-base cursor-pointer">
+                    <span>📥</span> 투명 배경 PNG 도장 다운로드
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 숨겨진 폰트 로드용 돔 엘리먼트 -->
+    <div class="hidden">
+        <span class="font-myeongjo"></span>
+        <span class="font-batang"></span>
+        <span class="font-gothic"></span>
+        <span class="font-black"></span>
+        <span class="font-gaegu"></span>
+    </div>
+
+    <script>
+        let currentShape = 'circle';
+        let currentLayout = 'grid';
+
+        const nameInput = document.getElementById('nameInput');
+        const addInCheckbox = document.getElementById('addIn');
+        const fontSelect = document.getElementById('fontSelect');
+        const canvas = document.getElementById('sealCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function setShape(shape) {
+            currentShape = shape;
+            document.getElementById('btnCircle').className = shape === 'circle' ? 'py-2.5 px-4 border rounded-xl font-medium text-sm transition bg-red-50 border-red-500 text-red-700 shadow-sm' : 'py-2.5 px-4 border rounded-xl font-medium text-sm transition bg-white border-slate-300 text-slate-700';
+            document.getElementById('btnSquare').className = shape === 'square' ? 'py-2.5 px-4 border rounded-xl font-medium text-sm transition bg-red-50 border-red-500 text-red-700 shadow-sm' : 'py-2.5 px-4 border rounded-xl font-medium text-sm transition bg-white border-slate-300 text-slate-700';
+            drawSeal();
+        }
+
+        function setLayout(layout) {
+            currentLayout = layout;
+            document.getElementById('btnLayoutGrid').className = layout === 'grid' ? 'py-2.5 px-4 border rounded-xl font-medium text-sm transition bg-red-50 border-red-500 text-red-700 shadow-sm' : 'py-2.5 px-4 border rounded-xl font-medium text-sm transition bg-white border-slate-300 text-slate-700';
+            document.getElementById('btnLayoutLine').className = layout === 'line' ? 'py-2.5 px-4 border rounded-xl font-medium text-sm transition bg-red-50 border-red-500 text-red-700 shadow-sm' : 'py-2.5 px-4 border rounded-xl font-medium text-sm transition bg-white border-slate-300 text-slate-700';
+            drawSeal();
+        }
+
+        function getFullText() {
+            let text = nameInput.value.trim() || '홍길동';
+            if (addInCheckbox.checked && !text.endsWith('인')) {
+                text += '인';
+            }
+            return text;
+        }
+
+        function getFontFamilyClass() {
+            return fontSelect.value;
+        }
+
+        function getCanvasFont(size, fontClass) {
+            let family = 'serif';
+            if (fontClass === 'font-myeongjo') family = '"Nanum Myeongjo", serif';
+            else if (fontClass === 'font-batang') family = '"Gowun Batang", serif';
+            else if (fontClass === 'font-gothic') family = '"Nanum Gothic", sans-serif';
+            else if (fontClass === 'font-black') family = '"Black Han Sans", sans-serif';
+            else if (fontClass === 'font-gaegu') family = '"Gaegu", cursive';
+            
+            return `bold ${size}px ${family}`;
+        }
+
+        function drawSeal() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = 135;
+
+            ctx.strokeStyle = '#d32f2f';
+            ctx.fillStyle = '#d32f2f';
+
+            ctx.lineWidth = 8;
+            if (currentShape === 'circle') {
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.stroke();
+
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius - 8, 0, Math.PI * 2);
+                ctx.stroke();
+            } else {
+                const size = 270;
+                const x = (width - size) / 2;
+                const y = (height - size) / 2;
+                ctx.strokeRect(x, y, size, size);
+
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x + 8, y + 8, size - 16, size - 16);
+            }
+
+            const text = getFullText();
+            const fontClass = getFontFamilyClass();
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            if (currentLayout === 'grid' && text.length === 4) {
+                const fontSize = 75;
+                ctx.font = getCanvasFont(fontSize, fontClass);
+                
+                const offsetX = 55;
+                const offsetY = 55;
+
+                ctx.fillText(text[0], centerX - offsetX, centerY - offsetY);
+                ctx.fillText(text[1], centerX + offsetX, centerY - offsetY);
+                ctx.fillText(text[2], centerX - offsetX, centerY + offsetY);
+                ctx.fillText(text[3], centerX + offsetX, centerY + offsetY);
+            } else {
+                let fontSize = 90;
+                if (text.length > 3) fontSize = 75;
+                if (text.length > 4) fontSize = 60;
+
+                ctx.font = getCanvasFont(fontSize, fontClass);
+                ctx.fillText(text, centerX, centerY + 2);
+            }
+        }
+
+        nameInput.addEventListener('input', drawSeal);
+        addInCheckbox.addEventListener('change', drawSeal);
+        fontSelect.addEventListener('change', drawSeal);
+
+        function downloadSeal() {
+            const link = document.createElement('a');
+            link.download = `서명도장_${nameInput.value.trim() || '도장'}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        window.onload = () => {
+            setTimeout(drawSeal, 100);
+        };
+    </script>
+</body>
+</html>
