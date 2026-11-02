@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>신나는 동물 짝맞추기 카드 게임</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Gaegu & Gothic A1 for fun classroom vibe) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Jua', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* 3D Flip Card Effect */
+        .card-container {
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .card-container.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            border: 4px solid #ffffff;
+            transform: rotateY(0deg);
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%);
+            border: 4px solid #f59e0b;
+            transform: rotateY(180deg);
+        }
+
+        /* Matched Card Animation & Glow */
+        .card-container.matched .card-front {
+            border-color: #10b981;
+            background: linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%);
+            animation: pulse-matched 0.5s ease-in-out alternate infinite;
+        }
+
+        @keyframes pulse-matched {
+            0% { transform: rotateY(180deg) scale(1); }
+            100% { transform: rotateY(180deg) scale(1.03); }
+        }
+
+        /* Bouncy Buttons */
+        .btn-bounce {
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+        .btn-bounce:active {
+            transform: scale(0.95);
+        }
+
+        /* Canvas Overlay */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="bg-amber-50 min-h-screen text-slate-800 flex flex-col justify-between items-center p-3 sm:p-6 overflow-x-hidden">
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Header & Title -->
+    <header class="w-full max-w-4xl text-center my-2">
+        <h1 class="text-3xl sm:text-5xl text-amber-600 drop-shadow-md tracking-wider flex items-center justify-center gap-2">
+            <span>🦁</span> 신나는 동물 짝맞추기 <span>🐶</span>
+        </h1>
+        <p class="text-slate-500 text-sm sm:text-lg mt-1 font-bold">같은 그림의 동물 카드를 찾아 짝을 맞춰보세요!</p>
+    </header>
+
+    <!-- Control Panel & Scoreboard -->
+    <main class="w-full max-w-4xl flex flex-col items-center gap-4 my-2">
+
+        <!-- Top Status Bar -->
+        <div class="w-full bg-white rounded-2xl p-4 shadow-lg border-4 border-amber-200 flex flex-wrap justify-around items-center gap-3">
+            
+            <!-- Difficulty Selector -->
+            <div class="flex items-center gap-2">
+                <span class="text-slate-600 text-base sm:text-lg font-bold">난이도:</span>
+                <select id="difficulty-select" onchange="changeDifficulty()" class="bg-amber-100 text-amber-900 border-2 border-amber-300 font-bold rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer text-base sm:text-lg">
+                    <option value="easy">쉬움 (6쌍 / 12장)</option>
+                    <option value="medium" selected>보통 (8쌍 / 16장)</option>
+                    <option value="hard">상급 (10쌍 / 20장)</option>
+                </select>
+            </div>
+
+            <!-- Stats Badge Group -->
+            <div class="flex items-center gap-4 sm:gap-6 text-base sm:text-xl font-bold">
+                <!-- Score -->
+                <div class="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                    <span>🏆 점수:</span>
+                    <span id="score-val" class="text-2xl text-emerald-700">0</span>
+                </div>
+                <!-- Moves -->
+                <div class="flex items-center gap-1.5 text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-200">
+                    <span>🎯 시도:</span>
+                    <span id="moves-val" class="text-2xl text-indigo-700">0</span>
+                </div>
+                <!-- Timer -->
+                <div class="flex items-center gap-1.5 text-rose-600 bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200">
+                    <span>⏱️ 시간:</span>
+                    <span id="timer-val" class="text-2xl text-rose-700">0초</span>
+                </div>
+            </div>
+
+            <!-- Sound Toggle & Reset Button -->
+            <div class="flex items-center gap-2">
+                <button id="sound-btn" onclick="toggleSound()" class="btn-bounce bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 rounded-xl border-2 border-slate-300 text-lg flex items-center justify-center">
+                    🔊
+                </button>
+                <button onclick="restartGame()" class="btn-bounce bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold px-4 py-2 rounded-xl border-b-4 border-orange-700 shadow-md text-lg flex items-center gap-1">
+                    🔄 다시 시작
+                </button>
+            </div>
+        </div>
+
+        <!-- Card Grid Board -->
+        <div id="game-board" class="w-full grid gap-3 sm:gap-4 p-4 bg-amber-100/60 rounded-3xl border-4 border-amber-300 shadow-inner justify-center min-h-[360px] sm:min-h-[460px] items-center">
+            <!-- Dynamic Card Elements inserted via JavaScript -->
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center text-slate-400 text-xs sm:text-sm my-2">
+        초등학교 수업 및 학습용 교구 🎮 카드 메모리 짝맞추기 게임
+    </footer>
+
+    <!-- Victory Modal Popup -->
+    <div id="victory-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40 hidden p-4">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl border-4 border-amber-400 transform transition-all scale-95 animate-bounce-short">
+            <div class="text-6xl mb-2">🎉🥳</div>
+            <h2 class="text-3xl sm:text-4xl text-amber-600 font-extrabold mb-2">축하합니다!</h2>
+            <p class="text-slate-600 text-lg mb-6">모든 동물 짝을 완성했어요!</p>
+            
+            <div class="bg-amber-50 rounded-2xl p-4 mb-6 border-2 border-amber-200 space-y-2 text-left text-lg font-bold text-slate-700">
+                <div class="flex justify-between">
+                    <span>🏆 최종 점수:</span>
+                    <span id="modal-score" class="text-emerald-600 text-xl">0점</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>🎯 총 시도 횟수:</span>
+                    <span id="modal-moves" class="text-indigo-600 text-xl">0회</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>⏱️ 걸린 시간:</span>
+                    <span id="modal-time" class="text-rose-600 text-xl">0초</span>
+                </div>
+            </div>
+
+            <button onclick="closeModalAndRestart()" class="btn-bounce w-full bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-white font-extrabold text-xl py-3 rounded-2xl border-b-4 border-teal-700 shadow-lg">
+                🚀 한 번 더 하기!
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        /* --- Audio Synthesizer Engine (Web Audio API) --- */
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            // Play Flip Click Sound
+            playFlip() {
+                if (this.muted) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(350, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+
+            // Play Match Success Chime Sound
+            playSuccess() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.25);
+                });
+            }
+
+            // Play Match Fail Buzzer Sound
+            playFail() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.linearRampToValueAtTime(130, now + 0.25);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            }
+
+            // Play Game Victory Fanfare Sound
+            playVictory() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const tune = [
+                    { f: 523.25, d: 0.15, t: 0 },    // C5
+                    { f: 659.25, d: 0.15, t: 0.15 }, // E5
+                    { f: 783.99, d: 0.15, t: 0.30 }, // G5
+                    { f: 1046.50, d: 0.4, t: 0.45 }  // C6
+                ];
+                tune.forEach(note => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(note.f, now + note.t);
+                    gain.gain.setValueAtTime(0.25, now + note.t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + note.t + note.d);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + note.t);
+                    osc.stop(now + note.t + note.d);
+                });
+            }
+        }
+
+        const sound = new SoundEngine();
+
+        function toggleSound() {
+            sound.muted = !sound.muted;
+            const btn = document.getElementById('sound-btn');
+            btn.innerHTML = sound.muted ? '🔇' : '🔊';
+            btn.classList.toggle('opacity-50', sound.muted);
+        }
+
+        /* --- Game State Variables --- */
+        const ANIMAL_POOL = [
+            { icon: '🦁', name: '사자' },
+            { icon: '🐶', name: '강아지' },
+            { icon: '🐱', name: '고양이' },
+            { icon: '🐼', name: '판다' },
+            { icon: '🦊', name: '여우' },
+            { icon: '🐰', name: '토끼' },
+            { icon: '🐸', name: '개구리' },
+            { icon: '🐵', name: '원숭이' },
+            { icon: '🐯', name: '호랑이' },
+            { icon: '코끼리', icon: '🐘' }
+        ];
+
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let totalPairs = 8; // Default medium (8 pairs)
+        let score = 0;
+        let moves = 0;
+        let timerSeconds = 0;
+        let timerInterval = null;
+        let isBoardLocked = false;
+        let isGameStarted = false;
+
+        /* --- Game Initialization --- */
+        function initGame() {
+            // Reset timers & state
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerSeconds = 0;
+            score = 0;
+            moves = 0;
+            matchedPairs = 0;
+            flippedCards = [];
+            isBoardLocked = false;
+            isGameStarted = false;
+
+            updateUI();
+
+            // Setup Difficulty Configuration
+            const diff = document.getElementById('difficulty-select').value;
+            let cols = 4;
+            if (diff === 'easy') {
+                totalPairs = 6;  // 12 cards (4x3)
+                cols = 4;
+            } else if (diff === 'medium') {
+                totalPairs = 8;  // 16 cards (4x4)
+                cols = 4;
+            } else if (diff === 'hard') {
+                totalPairs = 10; // 20 cards (5x4)
+                cols = 5;
+            }
+
+            // Create Grid Layout
+            const board = document.getElementById('game-board');
+            board.className = `w-full grid gap-3 sm:gap-4 p-4 bg-amber-100/60 rounded-3xl border-4 border-amber-300 shadow-inner justify-center items-center grid-cols-${cols}`;
+            
+            // Set dynamic responsive max width for grid
+            if (cols === 5) {
+                board.style.maxWidth = '750px';
+            } else {
+                board.style.maxWidth = '640px';
+            }
+
+            // Select Animals & Duplicate for Pairs
+            const selectedAnimals = ANIMAL_POOL.slice(0, totalPairs);
+            const deck = [...selectedAnimals, ...selectedAnimals];
+
+            // Shuffle Deck (Fisher-Yates)
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+
+            // Render Card HTML Elements
+            board.innerHTML = '';
+            cards = deck.map((animal, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card-container h-24 sm:h-32 w-full cursor-pointer';
+                cardEl.setAttribute('data-id', index);
+                cardEl.setAttribute('data-name', animal.name);
+
+                cardEl.innerHTML = `
+                    <div class="card-inner">
+                        <!-- Card Back (Hidden pattern) -->
+                        <div class="card-back flex flex-col items-center justify-center text-white">
+                            <span class="text-3xl sm:text-4xl opacity-80">❓</span>
+                        </div>
+                        <!-- Card Front (Animal Icon) -->
+                        <div class="card-front flex flex-col items-center justify-center">
+                            <span class="text-4xl sm:text-6xl filter drop-shadow">${animal.icon}</span>
+                        </div>
+                    </div>
+                `;
+
+                cardEl.addEventListener('click', () => handleCardClick(cardEl, animal));
+                board.appendChild(cardEl);
+                return { element: cardEl, animal: animal, isMatched: false };
+            });
+        }
+
+        /* --- Timer Functions --- */
+        function startTimer() {
+            if (isGameStarted) return;
+            isGameStarted = true;
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                document.getElementById('timer-val').innerText = `${timerSeconds}초`;
+            }, 1000);
+        }
+
+        /* --- Card Flip & Game Logic --- */
+        function handleCardClick(cardEl, animal) {
+            // Prevent interaction if locked, already flipped, or matched
+            if (isBoardLocked) return;
+            if (cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
+
+            // Start timer on first flip
+            startTimer();
+
+            // Flip Card
+            sound.playFlip();
+            cardEl.classList.add('flipped');
+            flippedCards.push({ element: cardEl, animal: animal });
+
+            // If 2 cards flipped, perform check
+            if (flippedCards.length === 2) {
+                moves++;
+                document.getElementById('moves-val').innerText = moves;
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            isBoardLocked = true;
+            const [card1, card2] = flippedCards;
+            const isMatch = card1.animal.icon === card2.animal.icon;
+
+            if (isMatch) {
+                // Match Found
+                setTimeout(() => {
+                    sound.playSuccess();
+                    card1.element.classList.add('matched');
+                    card2.element.classList.add('matched');
+
+                    score += 100;
+                    matchedPairs++;
+                    updateUI();
+
+                    flippedCards = [];
+                    isBoardLocked = false;
+
+                    // Check Game Clear Condition
+                    if (matchedPairs === totalPairs) {
+                        handleVictory();
+                    }
+                }, 400);
+
+            } else {
+                // Match Failed (Wait 1s then flip back)
+                setTimeout(() => {
+                    sound.playFail();
+                    card1.element.classList.remove('flipped');
+                    card2.element.classList.remove('flipped');
+
+                    // Small Penalty
+                    score = Math.max(0, score - 10);
+                    updateUI();
+
+                    flippedCards = [];
+                    isBoardLocked = false;
+                }, 1000);
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('score-val').innerText = score;
+            document.getElementById('moves-val').innerText = moves;
+            document.getElementById('timer-val').innerText = `${timerSeconds}초`;
+        }
+
+        function changeDifficulty() {
+            initGame();
+        }
+
+        function restartGame() {
+            initGame();
+        }
+
+        /* --- Game Victory Handler & Celebration --- */
+        function handleVictory() {
+            clearInterval(timerInterval);
+            
+            // Calculate final bonus score based on speed and moves
+            const timeBonus = Math.max(0, 300 - timerSeconds * 5);
+            const moveBonus = Math.max(0, 200 - moves * 5);
+            const finalScore = score + timeBonus + moveBonus;
+            
+            document.getElementById('score-val').innerText = finalScore;
+
+            setTimeout(() => {
+                sound.playVictory();
+                launchConfetti();
+
+                // Fill Modal Stats
+                document.getElementById('modal-score').innerText = `${finalScore}점`;
+                document.getElementById('modal-moves').innerText = `${moves}회`;
+                document.getElementById('modal-time').innerText = `${timerSeconds}초`;
+
+                // Open Modal
+                document.getElementById('victory-modal').classList.remove('hidden');
+            }, 600);
+        }
+
+        function closeModalAndRestart() {
+            document.getElementById('victory-modal').classList.add('hidden');
+            initGame();
+        }
+
+        /* --- Canvas HTML5 Confetti Particle System --- */
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#f59e0b', '#10b981', '#6366f1', '#ec4899', '#8b5cf6', '#3b82f6'];
+
+            for (let i = 0; i < 120; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 16,
+                    vy: (Math.random() - 0.8) * 16,
+                    size: Math.random() * 8 + 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rotation: Math.random() * 360,
+                    rSpeed: (Math.random() - 0.5) * 10,
+                    opacity: 1
+                });
+            }
+
+            function animateConfetti() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let alive = false;
+
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.3; // Gravity
+                    p.rotation += p.rSpeed;
+                    p.opacity -= 0.008;
+
+                    if (p.opacity > 0) {
+                        alive = true;
+                        ctx.save();
+                        ctx.translate(p.x, p.y);
+                        ctx.rotate((p.rotation * Math.PI) / 180);
+                        ctx.globalAlpha = Math.max(0, p.opacity);
+                        ctx.fillStyle = p.color;
+                        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                        ctx.restore();
+                    }
+                });
+
+                if (alive) {
+                    requestAnimationFrame(animateConfetti);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+
+            animateConfetti();
+        }
+
+        // Window Resize Handling for Responsive Canvas
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('confetti-canvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Initialize Game on Load
+        window.onload = () => {
+            initGame();
+        };
+    </script>
+</body>
+</html>

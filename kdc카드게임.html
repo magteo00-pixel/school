@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KDC 10대 대분류 매칭 라이브러리 게임</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Noto Sans KR for modern clean typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* 3D Flip Card Effect */
+        .card-container {
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .card-container.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        /* Card Back Default Style: Elegant Slate Slate Navy Gradient */
+        .card-back {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #334155;
+            transform: rotateY(0deg);
+        }
+
+        /* Card Front Styles */
+        .card-front {
+            transform: rotateY(180deg);
+            padding: 0.6rem;
+            background-color: #ffffff;
+        }
+
+        .card-front-code {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 2px solid #3b82f6;
+        }
+
+        .card-front-desc {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid #0ea5e9;
+        }
+
+        /* Matched Card Style */
+        .card-container.matched .card-front {
+            border-color: #10b981 !important;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%) !important;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
+        }
+
+        .btn-bounce {
+            transition: all 0.15s ease;
+        }
+        .btn-bounce:hover {
+            transform: translateY(-1px);
+        }
+        .btn-bounce:active {
+            transform: translateY(1px);
+        }
+
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col justify-between items-center p-4 sm:p-8 overflow-x-hidden">
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Header & Title -->
+    <header class="w-full max-w-4xl text-center my-3">
+        <div class="inline-flex items-center gap-2 px-3 py-1 bg-slate-200/80 rounded-full text-xs font-semibold text-slate-600 mb-2 border border-slate-300/60">
+            <span>KDC 한국십진분류법 학습 디바이스</span>
+        </div>
+        <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight flex items-center justify-center gap-2.5">
+            <span>📚</span> KDC 10대 주류 매칭 게임
+        </h1>
+        <p class="text-slate-500 text-xs sm:text-sm mt-1.5 font-medium">분류 기호(000)와 해당되는 대분류 명칭(총류)을 짝지어 연결하세요.</p>
+    </header>
+
+    <!-- Control Panel & Scoreboard -->
+    <main class="w-full max-w-4xl flex flex-col items-center gap-4 my-2">
+
+        <!-- Top Status Bar -->
+        <div class="w-full bg-white/90 backdrop-blur-md rounded-2xl p-4 shadow-sm border border-slate-200/80 flex flex-wrap justify-between items-center gap-4">
+            
+            <!-- Difficulty Selector -->
+            <div class="flex items-center gap-2.5">
+                <span class="text-slate-500 text-xs sm:text-sm font-semibold">난이도:</span>
+                <select id="difficulty-select" onchange="changeDifficulty()" class="bg-slate-50 text-slate-800 border border-slate-300 font-semibold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer text-xs sm:text-sm">
+                    <option value="easy">입문 (4쌍 / 8장)</option>
+                    <option value="medium" selected>기본 (6쌍 / 12장)</option>
+                    <option value="hard">KDC 마스터 (10쌍 전체)</option>
+                </select>
+            </div>
+
+            <!-- Stats Badge Group -->
+            <div class="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm font-medium">
+                <!-- Score -->
+                <div class="flex items-center gap-1.5 text-slate-700 bg-slate-100/80 px-3 py-1.5 rounded-lg border border-slate-200">
+                    <span class="text-slate-400 font-bold">점수</span>
+                    <span id="score-val" class="font-bold text-blue-600 text-base sm:text-lg">0</span>
+                </div>
+                <!-- Moves -->
+                <div class="flex items-center gap-1.5 text-slate-700 bg-slate-100/80 px-3 py-1.5 rounded-lg border border-slate-200">
+                    <span class="text-slate-400 font-bold">시도</span>
+                    <span id="moves-val" class="font-bold text-slate-900 text-base sm:text-lg">0</span>
+                </div>
+                <!-- Timer -->
+                <div class="flex items-center gap-1.5 text-slate-700 bg-slate-100/80 px-3 py-1.5 rounded-lg border border-slate-200">
+                    <span class="text-slate-400 font-bold">시간</span>
+                    <span id="timer-val" class="font-bold text-emerald-600 text-base sm:text-lg">0초</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-2">
+                <button onclick="toggleGuideModal()" class="btn-bounce bg-white hover:bg-slate-50 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border border-slate-300 shadow-sm text-xs sm:text-sm flex items-center gap-1.5">
+                    <span>📖</span> KDC 가이드
+                </button>
+                <button id="sound-btn" onclick="toggleSound()" class="btn-bounce bg-white hover:bg-slate-50 text-slate-600 px-2.5 py-1.5 rounded-lg border border-slate-300 shadow-sm text-xs sm:text-sm">
+                    🔊
+                </button>
+                <button onclick="restartGame()" class="btn-bounce bg-slate-900 hover:bg-slate-800 text-white font-semibold px-3.5 py-1.5 rounded-lg shadow-sm text-xs sm:text-sm flex items-center gap-1.5">
+                    <span>🔄</span> 재시작
+                </button>
+            </div>
+        </div>
+
+        <!-- Card Grid Board -->
+        <div id="game-board" class="w-full grid gap-3 sm:gap-4 p-5 bg-slate-200/50 rounded-2xl border border-slate-300/60 shadow-inner justify-center min-h-[380px] sm:min-h-[460px] items-center">
+            <!-- Dynamic Card Elements inserted via JavaScript -->
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center text-slate-400 text-xs my-2 font-medium">
+        KDC (Korean Decimal Classification) Educational Web Application
+    </footer>
+
+    <!-- KDC Guide Modal -->
+    <div id="guide-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-40 hidden p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-xl border border-slate-200">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                <h2 class="text-xl sm:text-2xl text-slate-900 font-bold flex items-center gap-2">
+                    <span>📖</span> KDC 10대 대분류 표준 분류표
+                </h2>
+                <button onclick="toggleGuideModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">✕</button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs sm:text-sm">
+                <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center gap-3">
+                    <span class="text-base font-extrabold text-blue-600 bg-white px-2 py-1 rounded border border-slate-200 font-mono">000</span>
+                    <div>
+                        <span class="font-bold text-slate-800">총류</span>
+                        <p class="text-slate-500 text-[11px] mt-0.5">컴퓨터, 백과사전, 신문, 도서관</p>
+                    </div>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center gap-3">
+                    <span class="text-base font-extrabold text-blue-600 bg-white px-2 py-1 rounded border border-slate-200 font-mono">100</span>
+                    <div>
+                        <span class="font-bold text-slate-800">철학</span>
+                        <p class="text-slate-500 text-[11px] mt-0.5">심리학, 생각, 윤리, 철학자</p>
+                    </div>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center gap-3">
+                    <span class="text-base font-extrabold text-blue-600 bg-white px-2 py-1 rounded border border-slate-200 font-mono">200</span>
+                    <div>
+                        <span class="font-bold text-slate-800">종교</span>
+                        <p class="text-slate-500 text-[11px] mt-0.5">불교, 기독교, 신화, 신앙</p>
+                    </div>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center gap-3">
+                    <span class="text-base font-extrabold text-blue-600 bg-white px-2 py-1 rounded border border-slate-200 font-mono">300</span>
+                    <div>
+                        <span class="font-bold text-slate-800">사회과학</span>
+                        <p class="text-slate-500 text-[11px] mt-0.5">법률, 정치, 경제, 교육</p>
+                    </div>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center gap-3">
+                    <span class="text-base font-extrabold text-blue-600 bg-white px-2 py-1 rounded border border-slate-200 font-mono">400</span>
+                    <div>
+                        <span class="font-bold text-slate-800">자연과학</span>
+                        <p class="text-slate-500 text-[11px] mt-0.5">수학, 물리학, 화학, 동식물</p>
+                    </div>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center gap-3">
+                    <span class="text-base font-extrabold text-blue-600 bg-white px-2 py-1 rounded border border-slate-200 font-mono">500</span>
+                    <div>
+                        <span class="font-bold text-slate-800">기술과학</span>
+                        <p class="text-slate-500 text-[11px] mt-0.5">의학, 공학, 농업, 요리</p>
+                    </div>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center gap-3">
+                    <span class="text-base font-extrabold text-blue-600 bg-white px-2 py-1 rounded border border-slate-200 font-mono">600</span>
+                    <div>
+                        <span class="font-bold text-slate-800">예술</span>
+                        <p class="text-slate-500 text-[11px] mt-0.5">미술, 음악, 체육, 연극</p>
+                    </div>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center gap-3">
+                    <span class="text-base font-extrabold text-blue-600 bg-white px-2 py-1 rounded border border-slate-200 font-mono">700</span>
+                    <div>
+                        <span class="font-bold text-slate-800">언어</span>
+                        <p class="text-slate-500 text-[11px] mt-0.5">국어, 영어, 문법, 회화</p>
+                    </div>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center gap-3">
+                    <span class="text-base font-extrabold text-blue-600 bg-white px-2 py-1 rounded border border-slate-200 font-mono">800</span>
+                    <div>
+                        <span class="font-bold text-slate-800">문학</span>
+                        <p class="text-slate-500 text-[11px] mt-0.5">시, 소설, 수필, 동화</p>
+                    </div>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center gap-3">
+                    <span class="text-base font-extrabold text-blue-600 bg-white px-2 py-1 rounded border border-slate-200 font-mono">900</span>
+                    <div>
+                        <span class="font-bold text-slate-800">역사</span>
+                        <p class="text-slate-500 text-[11px] mt-0.5">한국사, 세계사, 지리, 위인전</p>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="toggleGuideModal()" class="mt-5 btn-bounce w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm py-2.5 rounded-xl">
+                확인 및 닫기
+            </button>
+        </div>
+    </div>
+
+    <!-- Victory Modal Popup -->
+    <div id="victory-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-40 hidden p-4">
+        <div class="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full text-center shadow-xl border border-slate-200">
+            <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">🏆</div>
+            <h2 class="text-2xl sm:text-3xl text-slate-900 font-bold mb-1">학습 완료!</h2>
+            <p class="text-slate-500 text-xs sm:text-sm mb-5 font-medium">모든 KDC 주류 짝맞추기를 완료했습니다.</p>
+            
+            <div class="bg-slate-50 rounded-xl p-4 mb-6 border border-slate-200 space-y-2 text-left text-sm font-semibold text-slate-700">
+                <div class="flex justify-between">
+                    <span class="text-slate-500">최종 점수</span>
+                    <span id="modal-score" class="text-blue-600 text-base">0점</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">총 시도 횟수</span>
+                    <span id="modal-moves" class="text-slate-900 text-base">0회</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">소요 시간</span>
+                    <span id="modal-time" class="text-emerald-600 text-base">0초</span>
+                </div>
+            </div>
+
+            <button onclick="closeModalAndRestart()" class="btn-bounce w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm py-3 rounded-xl shadow-sm">
+                새 게임 시작
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        /* --- Audio Synthesizer Engine (Web Audio API) --- */
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playFlip() {
+                if (this.muted) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(350, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+
+            playSuccess() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.25);
+                });
+            }
+
+            playFail() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.linearRampToValueAtTime(130, now + 0.25);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            }
+
+            playVictory() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const tune = [
+                    { f: 523.25, d: 0.15, t: 0 },
+                    { f: 659.25, d: 0.15, t: 0.15 },
+                    { f: 783.99, d: 0.15, t: 0.30 },
+                    { f: 1046.50, d: 0.4, t: 0.45 }
+                ];
+                tune.forEach(note => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(note.f, now + note.t);
+                    gain.gain.setValueAtTime(0.25, now + note.t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + note.t + note.d);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + note.t);
+                    osc.stop(now + note.t + note.d);
+                });
+            }
+        }
+
+        const sound = new SoundEngine();
+
+        function toggleSound() {
+            sound.muted = !sound.muted;
+            const btn = document.getElementById('sound-btn');
+            btn.innerHTML = sound.muted ? '🔇' : '🔊';
+            btn.classList.toggle('opacity-50', sound.muted);
+        }
+
+        /* --- KDC 10 Main Classes Dataset --- */
+        const KDC_DATA = [
+            { code: '000', name: '총류', hint: '백과사전, 컴퓨터', icon: '💻' },
+            { code: '100', name: '철학', hint: '심리학, 생각, 윤리', icon: '🧠' },
+            { code: '200', name: '종교', hint: '불교, 기독교, 신화', icon: '☯️' },
+            { code: '300', name: '사회과학', hint: '법, 정치, 경제, 교육', icon: '⚖️' },
+            { code: '400', name: '자연과학', hint: '수학, 물리학, 동식물', icon: '🔬' },
+            { code: '500', name: '기술과학', hint: '의학, 공학, 요리', icon: '🚀' },
+            { code: '600', name: '예술', hint: '미술, 음악, 체육', icon: '🎨' },
+            { code: '700', name: '언어', hint: '국어, 영어, 문법', icon: '🗣️' },
+            { code: '800', name: '문학', hint: '시, 소설, 수필', icon: '📖' },
+            { code: '900', name: '역사', hint: '역사, 지리, 위인전', icon: '🗺️' }
+        ];
+
+        /* --- Game State Variables --- */
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let totalPairs = 6;
+        let score = 0;
+        let moves = 0;
+        let timerSeconds = 0;
+        let timerInterval = null;
+        let isBoardLocked = false;
+        let isGameStarted = false;
+
+        /* --- Game Initialization --- */
+        function initGame() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerSeconds = 0;
+            score = 0;
+            moves = 0;
+            matchedPairs = 0;
+            flippedCards = [];
+            isBoardLocked = false;
+            isGameStarted = false;
+
+            updateUI();
+
+            const diff = document.getElementById('difficulty-select').value;
+            let cols = 4;
+            if (diff === 'easy') {
+                totalPairs = 4;  // 8 cards (4x2)
+                cols = 4;
+            } else if (diff === 'medium') {
+                totalPairs = 6;  // 12 cards (4x3)
+                cols = 4;
+            } else if (diff === 'hard') {
+                totalPairs = 10; // 20 cards (5x4)
+                cols = 5;
+            }
+
+            const board = document.getElementById('game-board');
+            board.className = `w-full grid gap-3 sm:gap-4 p-4 bg-emerald-100/60 rounded-3xl border-4 border-emerald-300 shadow-inner justify-center items-center grid-cols-${cols}`;
+            
+            if (cols === 5) {
+                board.style.maxWidth = '840px';
+            } else {
+                board.style.maxWidth = '680px';
+            }
+
+            // Shuffle and Select KDC Pairs
+            // Select pairs according to current difficulty level
+            const shuffledKDC = [...KDC_DATA].sort(() => Math.random() - 0.5);
+            const selectedKDC = shuffledKDC.slice(0, totalPairs);
+
+            // Build dual card items: CODE card & NAME card
+            const deck = [];
+            selectedKDC.forEach((item, index) => {
+                // Card Type 1: Category Code Card (000, 100, ...)
+                deck.push({
+                    pairId: index,
+                    type: 'code',
+                    displayTitle: item.code,
+                    subText: '분류 번호',
+                    icon: item.icon,
+                    hintText: 'KDC 대분류 번호'
+                });
+                // Card Type 2: Category Name Card (총류, 철학, ...)
+                deck.push({
+                    pairId: index,
+                    type: 'name',
+                    displayTitle: item.name,
+                    subText: '대분류 이름',
+                    icon: item.icon,
+                    hintText: item.hint
+                });
+            });
+
+            // Fisher-Yates Shuffle
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+
+            cards = deck;
+            renderBoard();
+        }
+
+        /* --- Render Card Grid --- */
+        function renderBoard() {
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+
+            cards.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card-container h-28 sm:h-36 cursor-pointer';
+                cardEl.dataset.index = index;
+
+                const frontClass = card.type === 'code' ? 'card-front-code' : 'card-front-desc';
+                const tagColorClass = card.type === 'code' ? 'text-blue-700 bg-blue-100/70 border border-blue-200' : 'text-sky-700 bg-sky-100/70 border border-sky-200';
+
+                cardEl.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-back flex flex-col justify-center items-center">
+                            <span class="text-slate-500 font-mono text-xs tracking-widest font-bold">KDC</span>
+                            <div class="w-6 h-0.5 bg-slate-600 rounded-full my-1"></div>
+                        </div>
+                        <div class="card-front ${frontClass} flex flex-col justify-between items-center text-center select-none p-2.5">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${tagColorClass}">${card.subText}</span>
+                            <div class="my-auto">
+                                <div class="text-xl sm:text-2xl font-bold text-slate-800 ${card.type === 'code' ? 'font-mono tracking-tight' : ''}">${card.displayTitle}</div>
+                                <div class="text-[10px] sm:text-xs text-slate-500 font-medium mt-1 line-clamp-1">${card.hintText}</div>
+                            </div>
+                            <span class="text-xs text-slate-400 font-medium">${card.icon}</span>
+                        </div>
+                    </div>
+                `;
+
+                cardEl.addEventListener('click', () => handleCardClick(cardEl, index));
+                board.appendChild(cardEl);
+            });
+        }
+
+        /* --- Card Flip & Matching Logic --- */
+        function handleCardClick(cardEl, index) {
+            if (isBoardLocked) return;
+            if (cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
+
+            // Start Timer on First Card Flip
+            if (!isGameStarted) {
+                startTimer();
+                isGameStarted = true;
+            }
+
+            sound.playFlip();
+            cardEl.classList.add('flipped');
+            flippedCards.push({ element: cardEl, index: index, data: cards[index] });
+
+            if (flippedCards.length === 2) {
+                moves++;
+                updateUI();
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            isBoardLocked = true;
+            const [first, second] = flippedCards;
+
+            // Match condition: Same pairId but different card types (Code vs Name)
+            const isMatched = (first.data.pairId === second.data.pairId) && (first.data.type !== second.data.type);
+
+            if (isMatched) {
+                sound.playSuccess();
+                first.element.classList.add('matched');
+                second.element.classList.add('matched');
+
+                score += 100;
+                matchedPairs++;
+                flippedCards = [];
+                isBoardLocked = false;
+                updateUI();
+
+                // Check Game Victory Condition
+                if (matchedPairs === totalPairs) {
+                    setTimeout(handleVictory, 500);
+                }
+            } else {
+                sound.playFail();
+                score = Math.max(0, score - 10);
+                updateUI();
+
+                setTimeout(() => {
+                    first.element.classList.remove('flipped');
+                    second.element.classList.remove('flipped');
+                    flippedCards = [];
+                    isBoardLocked = false;
+                }, 1000);
+            }
+        }
+
+        /* --- Timer Logic --- */
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                document.getElementById('timer-val').innerText = `${timerSeconds}초`;
+            }, 1000);
+        }
+
+        /* --- UI Update Helpers --- */
+        function updateUI() {
+            document.getElementById('score-val').innerText = score;
+            document.getElementById('moves-val').innerText = moves;
+            document.getElementById('timer-val').innerText = `${timerSeconds}초`;
+        }
+
+        function changeDifficulty() {
+            initGame();
+        }
+
+        function restartGame() {
+            initGame();
+        }
+
+        function toggleGuideModal() {
+            const modal = document.getElementById('guide-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        /* --- Victory Confetti & Modal Handler --- */
+        function handleVictory() {
+            clearInterval(timerInterval);
+            sound.playVictory();
+            launchConfetti();
+
+            document.getElementById('modal-score').innerText = `${score}점`;
+            document.getElementById('modal-moves').innerText = `${moves}회`;
+            document.getElementById('modal-time').innerText = `${timerSeconds}초`;
+
+            const modal = document.getElementById('victory-modal');
+            modal.classList.remove('hidden');
+        }
+
+        function closeModalAndRestart() {
+            document.getElementById('victory-modal').classList.add('hidden');
+            initGame();
+        }
+
+        /* --- Simple Canvas Confetti Particle Effect --- */
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#f43f5e', '#3b82f6', '#10b981', '#eab308', '#a855f7', '#ec4899'];
+
+            for (let i = 0; i < 120; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 16,
+                    vy: (Math.random() - 0.7) * 16,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rotation: Math.random() * 360,
+                    rSpeed: (Math.random() - 0.5) * 10
+                });
+            }
+
+            let animationFrame;
+            const startTime = Date.now();
+
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.3; // Gravity
+                    p.rotation += p.rSpeed;
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rotation * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                    ctx.restore();
+                });
+
+                if (Date.now() - startTime < 3000) {
+                    animationFrame = requestAnimationFrame(render);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    cancelAnimationFrame(animationFrame);
+                }
+            }
+
+            render();
+        }
+
+        // Start initial game on window load
+        window.onload = () => {
+            initGame();
+        };
+    </script>
+</body>
+</html>
