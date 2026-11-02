@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>독도의 날 퀴즈</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+<style>
+:root{--bg:#fff;--card:#fff;--text:#222;--sub:#667;--pri:#1b8ef2;--ok:#19b36b;--okbg:#dcf8ea;--no:#ff6b6b;--nobg:#ffe6e6;--line:#bfe6fa;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root[data-theme="dark"]{--bg:#0f1c27;--card:#172a38;--text:#e8f1f8;--sub:#9db4c6;--pri:#5aa9e6;--ok:#4cc98a;--okbg:#14382a;--no:#ff7b7b;--nobg:#3d1f21;--line:#2a4358}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"Jua","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+body{min-height:100vh;display:flex;justify-content:center;padding:16px}
+.app{width:100%;max-width:720px}
+h1{font-size:2.1rem;margin:8px 0 16px;text-align:center;font-weight:400;color:var(--pri)}
+.card{background:var(--card);border:3px solid var(--line);border-radius:36px;padding:26px;box-shadow:0 8px 0 var(--line)}
+.bar{height:18px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:8px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#3ec1ff,#8f7bff);border-radius:99px;width:0;transition:width .3s}
+.meta{display:flex;justify-content:space-between;color:var(--sub);font-size:.95rem;margin-bottom:14px}
+.q{font-size:1.65rem;font-weight:400;line-height:1.5;margin:6px 0 18px}
+.qn{display:inline-block;background:var(--pri);color:#fff;font-size:1.15rem;padding:4px 18px;border-radius:99px}
+.num{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:var(--pri);color:#fff;margin-right:14px;flex:none;font-size:1.15rem}
+.opt{display:flex;align-items:center;width:100%;text-align:left;font:inherit;font-size:1.25rem;color:var(--text);background:var(--card);border:3px solid var(--line);border-radius:99px;padding:16px 24px;margin-bottom:12px;cursor:pointer;min-height:62px;box-shadow:0 5px 0 var(--line)}
+.opt:active{transform:translateY(4px);box-shadow:none}
+.opt.ok{border-color:var(--ok);background:var(--okbg);box-shadow:0 5px 0 var(--ok)}
+.opt.no{border-color:var(--no);background:var(--nobg);box-shadow:0 5px 0 var(--no)}
+.opt:disabled{cursor:default}
+.msg{min-height:3.2em;font-size:1.2rem;font-weight:400;margin:6px 0}
+.msg.ok{color:var(--ok)}.msg.no{color:var(--no)}
+.btn{font:inherit;font-size:1.25rem;font-weight:400;background:var(--pri);color:#fff;border:0;border-radius:99px;padding:14px 32px;cursor:pointer;min-height:58px;box-shadow:0 5px 0 rgba(0,0,0,.2)}
+.btn:active{transform:translateY(4px);box-shadow:none}
+.btn.alt{background:var(--card);color:var(--pri);border:3px solid var(--pri);box-shadow:0 5px 0 var(--pri)}
+.right{text-align:right}
+.center{text-align:center}
+.score{font-size:4.2rem;font-weight:400;color:var(--pri);margin:8px 0}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.note{color:var(--sub);font-size:1rem;margin:6px 0}
+.bounce{animation:b .35s}
+@keyframes b{50%{transform:scale(1.04)}}
+@media (prefers-reduced-motion:reduce){.bounce{animation:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>🌊 독도의 날 퀴즈 🏝️</h1>
+  <div class="card" id="root"></div>
+</div>
+<script>
+(function(){
+var BANK=[
+{q:"독도의 날은 매년 언제일까요?",o:["3월 1일","8월 15일","10월 25일","12월 25일"],a:2,e:"10월 25일이 독도의 날이에요."},
+{q:"독도는 어느 바다에 있을까요?",o:["동해","서해","남해","태평양"],a:0,e:"독도는 동해에 있는 우리나라 섬이에요."},
+{q:"독도는 어느 나라의 땅일까요?",o:["일본","대한민국","중국","러시아"],a:1,e:"독도는 역사적·지리적·국제법적으로 대한민국의 영토예요."},
+{q:"독도는 행정구역상 어느 도에 속할까요?",o:["강원도","제주도","전라남도","경상북도"],a:3,e:"독도는 경상북도 울릉군에 속해요."},
+{q:"독도를 이루는 두 개의 큰 섬은 무엇일까요?",o:["동도와 서도","남도와 북도","상도와 하도","대도와 소도"],a:0,e:"독도는 동도와 서도 두 섬과 작은 바위들로 이루어져 있어요."},
+{q:"독도에서 가장 가까운 우리나라 섬은 어디일까요?",o:["제주도","거제도","울릉도","강화도"],a:2,e:"독도는 울릉도에서 동남쪽으로 약 87km 떨어져 있어요."},
+{q:"독도에 사는 대표적인 새는 무엇일까요?",o:["독수리","괭이갈매기","펭귄","앵무새"],a:1,e:"독도에는 괭이갈매기가 많이 살아요."},
+{q:"울릉도와 독도를 지키려고 노력한 조선 시대 인물은 누구일까요?",o:["이순신","세종대왕","안용복","김구"],a:2,e:"안용복은 울릉도와 독도가 우리 땅임을 알리려고 애썼어요."},
+{q:"독도를 지키는 일을 하는 사람들은 누구일까요?",o:["독도경비대","소방관","우체부","농부"],a:0,e:"독도경비대가 독도를 지키고 있어요."},
+{q:"독도는 어떻게 만들어진 섬일까요?",o:["모래가 쌓여서","바다 속 화산이 솟아서","산호가 자라서","사람이 쌓아서"],a:1,e:"독도는 오래전 바다 속 화산 활동으로 만들어진 화산섬이에요."},
+{q:"독도는 우리나라 영토의 어느 쪽 끝에 있을까요?",o:["동쪽 끝","서쪽 끝","남쪽 끝","북쪽 끝"],a:0,e:"독도는 우리나라 가장 동쪽 끝에 있는 섬이에요."},
+{q:"독도에서 볼 수 있는 꽃은 무엇일까요?",o:["벚꽃","해국","튤립","해바라기"],a:1,e:"가을이면 독도에도 해국이 피어요."},
+{q:"옛날 독도에 많이 살았던 바다 동물은 무엇일까요?",o:["북극곰","돌고래","강치","악어"],a:2,e:"독도에는 예전에 강치(바다사자)가 많이 살았어요."},
+{q:"신라의 장군 이사부가 복속시킨 나라는 어디일까요?",o:["백제","고구려","발해","우산국"],a:3,e:"이사부는 울릉도와 독도 지역의 우산국을 신라에 편입시켰어요."},
+{q:"'독도(獨島)'에서 '독(獨)'은 어떤 뜻일까요?",o:["홀로","크다","붉다","높다"],a:0,e:"독도는 '홀로 떨어져 있는 섬'이라는 뜻을 담고 있어요."},
+{q:"독도 바닷길의 배들이 길을 찾도록 불을 밝혀 주는 시설은 무엇일까요?",o:["공항","등대","기차역","다리"],a:1,e:"독도에는 등대가 있어서 배들이 안전하게 다닐 수 있어요."},
+{q:"독도의 날은 어떤 사실을 기념해서 정했을까요?",o:["한글 만든 날","올림픽 개최","대한제국이 독도를 울릉군에 속한다고 밝힌 날","우리나라 국기를 만든 날"],a:2,e:"1900년 대한제국 칙령 제41호에서 독도가 울릉군 관할임을 밝혔어요."},
+{q:"독도를 지키기 위해 우리가 할 수 있는 일은 무엇일까요?",o:["모르는 척하기","독도에 대해 배우고 친구들에게 알리기","쓰레기 버리기","관심 갖지 않기"],a:1,e:"독도를 바르게 알고 알리는 것이 가장 중요해요."},
+{q:"독도의 옛 이름 중 하나는 무엇일까요?",o:["한라도","거제도","백령도","우산도"],a:3,e:"옛 문헌에는 독도가 우산도, 삼봉도 등으로 나와요."},
+{q:"독도의 주소에서 '리' 이름은 무엇일까요?",o:["독도리","동해리","바다리","섬리"],a:0,e:"독도의 주소는 경상북도 울릉군 울릉읍 독도리예요."}
+];
+var N=10,root=document.getElementById("root"),ac=null;
+var cur=[],idx=0,firstTry={},wrongIds=[],rightIds=[],locked=false,round=1;
+
+function beep(ok){
+  try{
+    ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+    var t=ac.currentTime,seq=ok?[[660,0],[880,.12]]:[[220,0],[180,.14]];
+    seq.forEach(function(s){
+      var o=ac.createOscillator(),g=ac.createGain();
+      o.type=ok?"sine":"square";o.frequency.value=s[0];
+      g.gain.setValueAtTime(.0001,t+s[1]);
+      g.gain.exponentialRampToValueAtTime(.18,t+s[1]+.02);
+      g.gain.exponentialRampToValueAtTime(.0001,t+s[1]+.2);
+      o.connect(g);g.connect(ac.destination);o.start(t+s[1]);o.stop(t+s[1]+.22);
+    });
+  }catch(e){}
+}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function esc(s){return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
+
+function start(){
+  round=1;firstTry={};
+  cur=shuffle(BANK.map(function(_,i){return i})).slice(0,N);
+  idx=0;show();
+}
+function retry(){
+  round++;
+  var keep=wrongIds.slice();
+  var rep=Math.round(rightIds.length*0.7);
+  var stay=shuffle(rightIds).slice(rep);
+  var pool=shuffle(BANK.map(function(_,i){return i}).filter(function(i){return cur.indexOf(i)<0}));
+  var fresh=pool.slice(0,rep);
+  if(fresh.length<rep){ // 새 문제가 모자라면 맞았던 문제를 다시 사용
+    var extra=shuffle(rightIds.filter(function(i){return stay.indexOf(i)<0&&fresh.indexOf(i)<0}));
+    fresh=fresh.concat(extra.slice(0,rep-fresh.length));
+  }
+  cur=shuffle(keep.concat(stay,fresh));
+  firstTry={};idx=0;show();
+}
+function show(){
+  locked=false;
+  var id=cur[idx],Q=BANK[id],order=shuffle([0,1,2,3]);
+  var pct=Math.round(idx/N*100);
+  var h='<div class="bar"><i style="width:'+pct+'%"></i></div>'+
+   '<div class="meta"><span>'+(idx+1)+' / '+N+' 문제</span><span>'+round+'번째 도전</span></div>'+
+   '<div class="qn">문제 '+(idx+1)+'번</div><div class="q">'+esc(Q.q)+'</div><div id="opts">';
+  order.forEach(function(k,i){h+='<button class="opt" data-k="'+k+'"><span class="num">'+(i+1)+'</span><span>'+esc(Q.o[k])+'</span></button>'});
+  h+='</div><div class="msg" id="msg" aria-live="polite"></div><div class="right" id="nx"></div>';
+  root.innerHTML=h;
+  root.querySelectorAll(".opt").forEach(function(b){b.addEventListener("click",function(){pick(b,+b.dataset.k)})});
+}
+function pick(btn,k){
+  if(locked)return;
+  var id=cur[idx],Q=BANK[id],msg=document.getElementById("msg");
+  if(k===Q.a){
+    locked=true;
+    if(!(id in firstTry))firstTry[id]=true;
+    btn.classList.add("ok","bounce");beep(true);
+    msg.className="msg ok";msg.textContent="🎉 정답이에요! "+Q.e;
+    root.querySelectorAll(".opt").forEach(function(b){b.disabled=true});
+    var last=idx===N-1;
+    document.getElementById("nx").innerHTML='<button class="btn" id="go">'+(last?"결과 보기":"다음 문제")+'</button>';
+    document.getElementById("go").onclick=function(){last?finish():(idx++,show())};
+  }else{
+    if(!(id in firstTry))firstTry[id]=false;
+    btn.classList.add("no");btn.disabled=true;beep(false);
+    msg.className="msg no";msg.textContent="🤔 다시 생각해보세요!";
+  }
+}
+function finish(){
+  wrongIds=[];rightIds=[];
+  cur.forEach(function(id){(firstTry[id]?rightIds:wrongIds).push(id)});
+  var n=rightIds.length,sc=n*10;
+  var m=n===N?"완벽해요! 독도 박사님이에요 🏆":n>=7?"잘했어요! 조금만 더 힘내요 👏":"괜찮아요, 다시 도전해 봐요 💪";
+  var h='<div class="center"><div class="note">최종 점수</div><div class="score">'+sc+'점</div>'+
+   '<div class="msg">'+n+' / '+N+' 문제 정답 · '+m+'</div></div>';
+  if(wrongIds.length){
+    h+='<div class="note">틀린 문제 '+wrongIds.length+'개는 그대로 다시 나오고, 맞힌 문제 중 약 70%는 새 문제로 바뀌어요.</div>';
+  }
+  h+='<div class="row"><button class="btn" id="re">'+(wrongIds.length?"재도전":"다시 하기")+'</button>'+
+     '<button class="btn alt" id="nw">처음부터 새로</button></div>';
+  root.innerHTML=h;
+  document.getElementById("re").onclick=function(){wrongIds.length?retry():start()};
+  document.getElementById("nw").onclick=start;
+}
+start();
+})();
+</script>
+</body>
+</html>
