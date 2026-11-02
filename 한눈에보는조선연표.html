@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>한눈에 보는 조선 연표</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap">
+<style>
+:root{
+  --bg:#eef0ec; --paper:#fbfbf8; --ink:#1e2433; --muted:#5c6577; --line:#b9bfc9;
+  --indigo:#22345a; --red:#b8402f; --teal:#2b7a74; --gold:#a8791f; --slate:#5b5f8a;
+  --serif:"Gowun Batang","Noto Serif KR","Nanum Myeongjo",serif;
+  --sans:"Gowun Dodum","Noto Sans KR","Malgun Gothic",sans-serif;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#141a28; --paper:#1d2538; --ink:#e9ecf3; --muted:#a3acc0; --line:#3a4560;
+    --indigo:#9db4ec; --red:#ee8c7c; --teal:#6fcbc2; --gold:#e3b95b; --slate:#aab0ee}
+}
+:root[data-theme="dark"]{--bg:#141a28; --paper:#1d2538; --ink:#e9ecf3; --muted:#a3acc0; --line:#3a4560;
+  --indigo:#9db4ec; --red:#ee8c7c; --teal:#6fcbc2; --gold:#e3b95b; --slate:#aab0ee}
+*{box-sizing:border-box}
+html{height:100%}
+body{margin:0;height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+header{width:100%;max-width:640px;margin:0 auto;padding:12px 12px 4px;flex:none}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+h1{font-family:var(--serif);font-size:clamp(22px,5vw,32px);margin:0;color:var(--indigo)}
+.legend{display:flex;flex-wrap:wrap;gap:2px 12px;margin:4px 0 0;padding:0;list-style:none;font-size:12.5px;color:var(--muted)}
+.legend li{display:flex;align-items:center;gap:5px}
+.sw{width:10px;height:10px;border-radius:50%}
+.btn{font:inherit;font-weight:700;border:2px solid var(--indigo);background:transparent;color:var(--indigo);padding:6px 16px;border-radius:999px;cursor:pointer;min-height:44px;white-space:nowrap}
+.btn:hover{background:var(--indigo);color:var(--bg)}
+.btn.fillb{background:var(--indigo);color:var(--bg)}
+.btn:disabled{opacity:.35;cursor:default;background:transparent;color:var(--indigo)}
+.btn:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.tl{position:relative;flex:1;min-height:0;width:100%;max-width:640px;margin:0 auto;padding:0 12px;overflow-y:auto;overflow-x:hidden}
+.rail,.fill{position:absolute;left:94px;width:4px;border-radius:2px}
+.rail{background:var(--line)}
+.fill{background:var(--indigo);height:0;transition:height .6s cubic-bezier(.3,.7,.2,1)}
+.links{position:absolute;left:0;top:0;width:100%;overflow:visible;pointer-events:none}
+.links path{fill:none;stroke:var(--line);stroke-width:1.5;transition:stroke .3s}
+.links path.on{stroke:var(--c);stroke-width:3}
+.dot{position:absolute;left:96px;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:var(--paper);border:3px solid var(--c);transition:transform .35s,box-shadow .35s;cursor:pointer;z-index:1}
+.dot.on{transform:scale(1.7);background:var(--c);box-shadow:0 0 0 5px color-mix(in srgb,var(--c) 22%,transparent)}
+.gap{position:absolute;left:0;width:80px;text-align:right;font-size:12px;color:var(--muted);line-height:1.2;transform:translateY(-50%)}
+.card{position:absolute;left:150px;right:auto;width:max-content;max-width:calc(100% - 162px);display:flex;align-items:center;gap:8px;text-align:left;font:inherit;color:inherit;background:var(--paper);border:2px solid var(--line);border-left:6px solid var(--c);border-radius:10px;padding:0 10px;cursor:pointer;transition:transform .35s,border-color .35s,background .35s,box-shadow .35s;min-width:0}
+.card:hover{transform:translateX(3px)}
+.card .y{font-family:var(--serif);font-size:12.5px;color:var(--muted);flex:none}
+.card .t{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card.sm .t{font-size:12.5px}.card.sm .y{font-size:11.5px}
+.card.on{transform:translateX(8px) scale(1.12);transform-origin:left center;z-index:2;border-color:var(--c);background:color-mix(in srgb,var(--c) 12%,var(--paper));box-shadow:0 5px 16px rgba(20,30,60,.2)}
+.card.on .y{color:var(--c);font-weight:700;font-size:14px}.card.on .t{font-size:16px}
+.card:focus-visible{outline:3px solid var(--indigo);outline-offset:2px}
+.empty{padding:40px 0;color:var(--muted);text-align:center}
+
+dialog{border:0;padding:0;background:var(--paper);color:var(--ink);width:min(560px,calc(100vw - 28px));max-height:calc(100vh - 40px);border-radius:20px;box-shadow:0 20px 60px rgba(10,15,30,.45);overflow:hidden}
+dialog::backdrop{background:rgba(14,20,36,.55)}
+dialog[open]{animation:pop .35s cubic-bezier(.3,.8,.3,1)}
+@keyframes pop{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}
+.bar{height:10px;background:var(--c,var(--indigo))}
+.body{padding:20px 24px 8px;overflow-y:auto;max-height:calc(100vh - 170px)}
+.meta{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.meta .y{font-family:var(--serif);font-size:34px;font-weight:700;color:var(--c)}
+.meta .e{font-size:14px;color:var(--muted)}
+.body h2{font-family:var(--serif);font-size:26px;margin:2px 0 10px;line-height:1.3}
+.body p{margin:0 0 12px;max-width:44ch;overflow-wrap:anywhere}
+.sum{font-size:18px;font-weight:700}
+.sub{color:var(--muted);font-size:14px}
+.box{background:color-mix(in srgb,var(--c) 12%,var(--paper));border-left:5px solid var(--c);padding:10px 14px;border-radius:0 12px 12px 0;margin:14px 0 6px}
+.box b{display:block;font-size:14px;color:var(--c)}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 20px 18px;flex-wrap:wrap}
+.del{border-color:var(--red);color:var(--red)}
+.del:hover{background:var(--red);color:var(--paper)}
+.close{position:absolute;top:18px;right:12px;width:44px;height:44px;border:0;background:rgba(255,255,255,.9);color:#1e2433;border-radius:50%;font-size:22px;cursor:pointer}
+.close:focus-visible{outline:3px solid var(--red)}
+.fm{padding:20px 24px 20px}
+.fm h2{font-family:var(--serif);font-size:24px;margin:0 0 12px;color:var(--indigo)}
+.fm label{display:block;font-weight:700;font-size:14px;margin:12px 0 4px}
+.fm input,.fm textarea,.fm select{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:8px 10px}
+.fm input:focus,.fm textarea:focus,.fm select:focus{outline:3px solid var(--indigo);outline-offset:1px}
+.fm textarea{resize:vertical;min-height:80px}
+.err{color:var(--red);font-size:14px;min-height:22px;margin:8px 0 0}
+.acts{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+@media (max-width:600px){dialog{margin:auto auto 0;width:100vw;max-width:100vw;border-radius:20px 20px 0 0}}
+@media (prefers-reduced-motion:reduce){*,dialog[open]{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top"><h1>한눈에 보는 조선 연표</h1><button class="btn fillb" id="add">사건 추가</button></div>
+  <ul class="legend" aria-label="사건 종류">
+    <li><span class="sw" style="background:var(--teal)"></span>시작과 문화</li>
+    <li><span class="sw" style="background:var(--red)"></span>전쟁</li>
+    <li><span class="sw" style="background:var(--gold)"></span>바로잡는 노력</li>
+    <li><span class="sw" style="background:var(--slate)"></span>흔들리는 시대</li>
+    <li>점 사이 거리 = 실제 햇수</li>
+  </ul>
+</header>
+<section class="tl" id="tl" aria-label="조선시대 연표"></section>
+
+<dialog id="dlg" aria-labelledby="dt">
+  <div class="bar" id="dbar"></div>
+  <button class="close" id="dclose" aria-label="닫기">×</button>
+  <div class="body" id="dbody"></div>
+  <div class="foot"><button class="btn" id="dprev">이전 사건</button><button class="btn del" id="ddel" hidden>사건 삭제</button><button class="btn" id="dnext">다음 사건</button></div>
+</dialog>
+
+<dialog id="fdlg" aria-labelledby="ft">
+  <div class="bar"></div>
+  <form class="fm" id="form" autocomplete="off">
+    <h2 id="ft">내 사건 추가하기</h2>
+    <label for="fy">연도</label>
+    <input id="fy" type="number" inputmode="numeric" min="1" max="2100" placeholder="예: 1485" required>
+    <label for="ft2">사건 이름</label>
+    <input id="ft2" type="text" maxlength="20" placeholder="예: 경국대전 완성" required>
+    <label for="fk">종류</label>
+    <select id="fk"><option value="a">시작과 문화</option><option value="w">전쟁</option><option value="r">바로잡는 노력</option><option value="t">흔들리는 시대</option></select>
+    <label for="fd">쉬운 설명 (선택)</label>
+    <textarea id="fd" maxlength="200" placeholder="친구들이 이해하기 쉽게 적어 보세요."></textarea>
+    <p class="err" id="err" role="alert"></p>
+    <div class="acts"><button type="button" class="btn" id="fcancel">취소</button><button type="submit" class="btn fillb">추가</button></div>
+  </form>
+</dialog>
+
+<script>
+var C={a:"var(--teal)",w:"var(--red)",r:"var(--gold)",t:"var(--slate)"};
+var N={a:"나라의 시작과 문화",w:"전쟁",r:"나라를 바로잡는 노력",t:"흔들리는 시대"};
+var BASE=[
+{y:1392,t:"조선 건국",k:"a",s:"이성계가 새 나라 ‘조선’을 세웠어요.",
+ d:"고려 말에 나라가 어지러워지자, 장군 이성계가 백성들의 도움을 받아 새 나라를 열었어요. 이름은 ‘조선’이라고 지었고, 얼마 뒤 수도를 한양(지금의 서울)으로 옮겼어요.",
+ m:"조선은 이때부터 약 500년 동안 이어졌어요."},
+{y:1418,t:"세종대왕 즉위",k:"a",s:"백성을 아끼는 임금, 세종이 왕이 되었어요.",
+ d:"세종은 스물한 살에 임금이 되었어요. 공부를 아주 좋아했고, 신분과 상관없이 능력 있는 사람을 뽑아 함께 일했어요. 장영실 같은 과학자도 도왔지요.",
+ m:"세종 때 농사, 과학, 음악이 크게 발전했어요."},
+{y:1443,t:"한글 창제",k:"a",s:"세종대왕이 우리 글자, 한글을 만들었어요.",
+ d:"그때는 어려운 한자를 써서 많은 백성이 글을 읽고 쓰지 못했어요. 세종대왕은 누구나 쉽게 배울 수 있는 글자를 만들었고, 1446년에 ‘훈민정음’이라는 이름으로 널리 알렸어요.",
+ m:"훈민정음은 ‘백성을 가르치는 바른 소리’라는 뜻이에요."},
+{y:1592,t:"임진왜란",k:"w",s:"일본이 쳐들어와 7년 동안 전쟁이 벌어졌어요.",
+ d:"일본이 큰 군대를 이끌고 바다를 건너왔어요. 이순신 장군은 거북선과 지혜로운 작전으로 바다에서 크게 이겼고, 곳곳에서 평범한 백성들이 ‘의병’이 되어 나라를 지켰어요.",
+ m:"이순신 장군의 한산도 대첩이 가장 유명해요."},
+{y:1636,t:"병자호란",k:"w",s:"청나라가 쳐들어온 전쟁이에요.",
+ d:"청나라가 조선에 쳐들어오자 인조 임금은 남한산성으로 피했어요. 추위와 배고픔 속에서 오래 버티다가 결국 항복했고, 많은 백성이 힘든 시간을 보냈어요.",
+ m:"전쟁이 끝난 뒤에도 백성들의 삶을 다시 일으키는 데 오랜 시간이 걸렸어요."},
+{y:1724,t:"영조의 탕평책",k:"r",s:"편을 가르지 않고 인재를 골고루 뽑았어요.",
+ d:"그때 신하들은 서로 편을 나누어 자주 싸웠어요. 영조 임금은 어느 편이든 능력 있는 사람을 고르게 뽑는 ‘탕평책’을 펼쳐 다툼을 줄이려 했어요.",
+ m:"‘탕평’은 치우치지 않고 공평하다는 뜻이에요."},
+{y:1794,t:"수원 화성 축조",k:"r",s:"정조 임금이 튼튼하고 멋진 성을 짓기 시작했어요.",
+ d:"정조 임금은 새로운 도시를 만들고 싶어 수원에 화성을 쌓았어요. 학자 정약용이 무거운 돌을 쉽게 들어 올리는 ‘거중기’를 만들어 공사를 도왔어요. 성은 1796년에 완성되었어요.",
+ m:"수원 화성은 지금 유네스코 세계유산이에요."},
+{y:1866,t:"병인양요",k:"w",s:"프랑스 군대가 강화도에 쳐들어왔어요.",
+ d:"프랑스 군함이 강화도에 와서 싸움이 벌어졌어요. 조선군은 이를 막아 냈지만, 프랑스군은 물러나면서 소중한 책(외규장각 의궤)을 가져갔어요. 이 책들은 오랜 뒤에야 돌아왔어요.",
+ m:"이 일 뒤 조선은 다른 나라에 문을 더 굳게 닫았어요."},
+{y:1894,t:"동학농민운동",k:"t",s:"농민들이 살기 좋은 세상을 외치며 일어났어요.",
+ d:"나쁜 관리들이 세금을 너무 많이 걷어 농민들의 삶이 힘들었어요. 전봉준과 농민들은 ‘백성이 편안한 세상’을 만들자며 함께 일어났어요.",
+ m:"농민들이 스스로 나라를 바꾸려 한 큰 움직임이었어요."},
+{y:1897,t:"대한제국 선포",k:"t",s:"조선이 ‘대한제국’이라는 새 이름을 썼어요.",
+ d:"주변 나라들이 조선을 넘보던 때에 고종 임금은 스스로 ‘황제’가 되고 나라 이름을 ‘대한제국’으로 바꿨어요. 우리나라가 스스로 서 있는 힘센 나라임을 알리려는 뜻이었어요.",
+ m:"‘대한민국’이라는 이름의 ‘대한’도 여기서 이어졌어요."}
+];
+var KEY="joseon-custom-events",custom=[],D=[],selId=null,cur=-1,delArm=false;
+try{var raw=localStorage.getItem(KEY);if(raw){custom=JSON.parse(raw);if(!Array.isArray(custom))custom=[]}}catch(x){custom=[]}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(custom))}catch(x){}}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function merge(){
+  D=BASE.map(function(e,i){return Object.assign({id:"b"+i,custom:false},e)})
+   .concat(custom.map(function(e){return Object.assign({custom:true},e)}));
+  D.sort(function(a,b){return a.y-b.y});
+}
+var tl=document.getElementById("tl"),dlg=document.getElementById("dlg"),dbody=document.getElementById("dbody"),dbar=document.getElementById("dbar"),
+dprev=document.getElementById("dprev"),dnext=document.getElementById("dnext"),ddel=document.getElementById("ddel"),
+fdlg=document.getElementById("fdlg"),cards=[],dots=[],paths=[],ys=[],fill=null;
+var reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches,NS="http://www.w3.org/2000/svg";
+
+function build(){
+  merge();tl.innerHTML="";cards=[];dots=[];paths=[];ys=[];
+  var n=D.length,avail=tl.clientHeight;
+  if(!n){tl.innerHTML='<p class="empty">사건이 없어요.</p>';return}
+  var h=Math.max(22,Math.min(32,Math.floor((avail-16)/n)-4)),half=h/2,pad=half+8,mn=D[0].y,mx=D[n-1].y;
+  var px=mx>mn?(avail-2*pad)/(mx-mn):0,cy=[];
+  D.forEach(function(e,i){ys[i]=mx>mn?pad+(e.y-mn)*px:avail/2;cy[i]=i?Math.max(ys[i],cy[i-1]+h+4):ys[i]});
+  var lim=avail-half-4;
+  if(cy[n-1]>lim){cy[n-1]=lim;for(var j=n-2;j>=0;j--)cy[j]=Math.min(cy[j],cy[j+1]-h-4)}
+  var rail=document.createElement("div");rail.className="rail";rail.style.top=ys[0]-2+"px";rail.style.height=(ys[n-1]-ys[0]+4)+"px";tl.appendChild(rail);
+  fill=document.createElement("div");fill.className="fill";fill.style.top=ys[0]-2+"px";tl.appendChild(fill);
+  var svg=document.createElementNS(NS,"svg");svg.setAttribute("class","links");svg.setAttribute("height",Math.max(avail,cy[n-1]+half+8));svg.setAttribute("aria-hidden","true");tl.appendChild(svg);
+  D.forEach(function(e,i){
+    var c=C[e.k],p=document.createElementNS(NS,"path");
+    p.setAttribute("d","M96 "+ys[i]+" C 124 "+ys[i]+", 124 "+cy[i]+", 150 "+cy[i]);p.style.setProperty("--c",c);svg.appendChild(p);paths.push(p);
+    var d=document.createElement("div");d.className="dot";d.style.top=ys[i]+"px";d.style.setProperty("--c",c);
+    d.onclick=function(){go(i,true)};tl.appendChild(d);dots.push(d);
+    var b=document.createElement("button");b.className="card"+(h<28?" sm":"");b.style.top=cy[i]-half+"px";b.style.height=h+"px";b.style.setProperty("--c",c);
+    b.setAttribute("aria-label",e.y+"년 "+e.t+" 자세히 보기");
+    var y=document.createElement("span");y.className="y";y.textContent=e.y+"년";
+    var t=document.createElement("span");t.className="t";t.textContent=e.t;b.appendChild(y);b.appendChild(t);
+    b.onclick=function(){go(i,true)};tl.appendChild(b);cards.push(b);
+    if(i<n-1){var g=ys[i+1]-ys[i];if(g>=34){var l=document.createElement("div");l.className="gap";l.style.top=(ys[i]+g/2)+"px";l.textContent=(D[i+1].y-e.y)+"년 뒤";tl.appendChild(l)}}
+  });
+  cur=-1;for(var k=0;k<n;k++)if(D[k].id===selId)cur=k;
+  if(cur>=0)mark(cur);
+}
+function render(i){
+  var e=D[i];
+  dlg.style.setProperty("--c",C[e.k]);dbar.style.background=C[e.k];
+  var prevTxt=i>0?'<p class="sub">앞 사건(‘'+esc(D[i-1].t)+'’)에서 '+(e.y-D[i-1].y)+'년이 지났어요.</p>':'<p class="sub">연표의 첫 장면이에요.</p>';
+  dbody.innerHTML='<div class="meta"><span class="y">'+e.y+'년</span><span class="e">'+N[e.k]+'</span></div>'+
+   '<h2 id="dt">'+esc(e.t)+'</h2>'+(e.s?'<p class="sum">'+esc(e.s)+'</p>':'')+'<p>'+esc(e.d||"내가 직접 추가한 사건이에요.")+'</p>'+prevTxt+
+   (e.m?'<div class="box"><b>기억해요</b>'+esc(e.m)+'</div>':'');
+  dbody.scrollTop=0;
+  dprev.disabled=i===0;dnext.disabled=i===D.length-1;
+  ddel.hidden=!e.custom;delArm=false;ddel.textContent="사건 삭제";
+}
+function mark(i){
+  cur=i;selId=D[i].id;
+  cards.forEach(function(n,j){var on=j===i;n.classList.toggle("on",on);dots[j].classList.toggle("on",on);paths[j].classList.toggle("on",on);n.setAttribute("aria-current",on?"true":"false")});
+  fill.style.height=(ys[i]-ys[0]+4)+"px";
+}
+function go(i,open){
+  if(i<0||i>=D.length)return;
+  mark(i);render(i);
+  if(open&&!dlg.open){setTimeout(function(){if(!dlg.open)dlg.showModal()},reduce?0:300)}
+}
+dprev.onclick=function(){go(cur-1,true)};
+dnext.onclick=function(){go(cur+1,true)};
+ddel.onclick=function(){
+  if(!delArm){delArm=true;ddel.textContent="정말 삭제할까요?";return}
+  custom=custom.filter(function(e){return e.id!==selId});save();selId=null;dlg.close();build();
+};
+document.getElementById("dclose").onclick=function(){dlg.close()};
+dlg.addEventListener("click",function(ev){if(ev.target===dlg)dlg.close()});
+fdlg.addEventListener("click",function(ev){if(ev.target===fdlg)fdlg.close()});
+
+document.getElementById("add").onclick=function(){document.getElementById("form").reset();document.getElementById("err").textContent="";fdlg.showModal();document.getElementById("fy").focus()};
+document.getElementById("fcancel").onclick=function(){fdlg.close()};
+document.getElementById("form").addEventListener("submit",function(ev){
+  ev.preventDefault();
+  var y=parseInt(document.getElementById("fy").value,10),t=document.getElementById("ft2").value.trim(),
+      k=document.getElementById("fk").value,d=document.getElementById("fd").value.trim(),err=document.getElementById("err");
+  if(!(y>=1&&y<=2100)){err.textContent="연도를 1~2100 사이 숫자로 적어 주세요.";return}
+  if(!t){err.textContent="사건 이름을 적어 주세요.";return}
+  var e={id:"c"+Date.now(),y:y,t:t,k:k,s:"",d:d,m:""};
+  custom.push(e);save();selId=e.id;fdlg.close();build();
+  var i=D.findIndex(function(x){return x.id===e.id});if(i>=0)render(i);
+});
+document.addEventListener("keydown",function(ev){
+  if(fdlg.open||ev.target.closest("input,textarea,select"))return;
+  if(ev.key==="ArrowDown"||ev.key==="ArrowRight"){ev.preventDefault();go(cur<0?0:cur+1,true)}
+  if(ev.key==="ArrowUp"||ev.key==="ArrowLeft"){ev.preventDefault();if(cur>0)go(cur-1,true)}
+});
+var rt;window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(build,120)});
+build();
+</script>
+</body>
+</html>
