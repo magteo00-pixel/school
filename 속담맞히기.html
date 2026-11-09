@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>속담 척척 퀴즈</title>
+<style>
+:root{
+  --desk:#7A5230; --desk2:#6A4526;
+  --wood:#C48A4F; --wood-d:#8F5E2C;
+  --board:#1E4D40; --board-d:#153A30;
+  --chalk:#F7F5EC; --chalk-dim:#C9D6CC;
+  --yellow:#FFD84D; --yellow-d:#D9A915;
+  --pink:#FF7F96; --pink-d:#D2506B;
+  --blue:#6CBBF7; --blue-d:#3B8FCF;
+  --green:#4CC38A; --green-d:#2B9462;
+  --ink:#1F2A27; --red:#FF6B6B;
+  --font:'Pretendard','Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{
+  font-family:var(--font);color:var(--chalk);
+  background:
+    repeating-linear-gradient(92deg,rgba(0,0,0,.05) 0 2px,transparent 2px 14px),
+    linear-gradient(var(--desk),var(--desk2));
+  min-height:100dvh;
+  padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+  display:flex;justify-content:center;
+  word-break:keep-all;
+}
+button,input{font-family:inherit}
+.board{
+  width:100%;max-width:780px;min-height:calc(100dvh - 20px);
+  border:12px solid var(--wood);border-radius:22px;
+  box-shadow:0 0 0 3px var(--wood-d),0 14px 30px rgba(0,0,0,.4),inset 0 0 60px rgba(0,0,0,.35);
+  background:
+    radial-gradient(ellipse at 20% 10%,rgba(255,255,255,.07),transparent 55%),
+    radial-gradient(ellipse at 80% 90%,rgba(255,255,255,.05),transparent 50%),
+    var(--board);
+  position:relative;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+.screen{display:none;flex:1;flex-direction:column;align-items:center;padding:clamp(14px,3.5vw,30px);gap:clamp(10px,2vw,18px)}
+.screen.active{display:flex}
+
+/* ---------- buttons (3D) ---------- */
+.btn{
+  --c:var(--yellow);--cd:var(--yellow-d);--t:var(--ink);
+  border:0;border-radius:16px;padding:13px 22px;min-height:48px;
+  font-size:1.05rem;font-weight:800;color:var(--t);background:var(--c);cursor:pointer;
+  box-shadow:0 6px 0 var(--cd),0 10px 16px rgba(0,0,0,.28);
+  transition:transform .08s,box-shadow .08s,filter .15s;
+}
+.btn:hover{filter:brightness(1.05)}
+.btn:active{transform:translateY(5px);box-shadow:0 1px 0 var(--cd),0 3px 6px rgba(0,0,0,.28)}
+.btn:disabled{filter:grayscale(.8) brightness(.8);cursor:not-allowed;transform:translateY(4px);box-shadow:0 2px 0 var(--cd)}
+.btn.green{--c:var(--green);--cd:var(--green-d)}
+.btn.blue{--c:var(--blue);--cd:var(--blue-d)}
+.btn.pink{--c:var(--pink);--cd:var(--pink-d);--t:#fff}
+.btn.big{font-size:1.5rem;padding:16px 38px;border-radius:20px}
+.btn.small{font-size:.95rem;padding:10px 16px;min-height:42px}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
+
+/* ---------- start ---------- */
+.scene{width:92px;height:92px;perspective:520px;margin-top:4px}
+.cube{width:100%;height:100%;position:relative;transform-style:preserve-3d;animation:spin 10s linear infinite}
+.face{position:absolute;inset:0;display:grid;place-items:center;font-size:2.4rem;font-weight:900;color:#fff;border-radius:12px;border:3px solid rgba(255,255,255,.7)}
+.f1{transform:rotateY(0) translateZ(46px);background:var(--pink-d)}
+.f2{transform:rotateY(90deg) translateZ(46px);background:var(--blue-d)}
+.f3{transform:rotateY(180deg) translateZ(46px);background:var(--green-d)}
+.f4{transform:rotateY(-90deg) translateZ(46px);background:var(--yellow-d)}
+.f5{transform:rotateX(90deg) translateZ(46px);background:#8A5CD6}
+.f6{transform:rotateX(-90deg) translateZ(46px);background:#2AA4B8}
+@keyframes spin{from{transform:rotateX(-22deg) rotateY(0)}to{transform:rotateX(-22deg) rotateY(360deg)}}
+h1.title{margin:0;text-align:center;font-size:clamp(2.3rem,9vw,3.9rem);font-weight:900;letter-spacing:-.02em;line-height:1.1;
+  color:var(--chalk);text-shadow:3px 3px 0 var(--pink-d),6px 6px 0 rgba(0,0,0,.25)}
+.lead{margin:0;text-align:center;max-width:30em;font-size:clamp(1rem,3.4vw,1.2rem);line-height:1.6;color:var(--chalk-dim)}
+.tilt-wrap{perspective:900px;width:100%;max-width:520px}
+.settings{
+  transform-style:preserve-3d;transition:transform .18s ease-out;
+  background:var(--chalk);color:var(--ink);border-radius:24px;padding:22px 22px 24px;
+  border:4px solid var(--yellow);
+  box-shadow:0 10px 0 var(--yellow-d),0 22px 30px rgba(0,0,0,.4);
+  display:flex;flex-direction:column;gap:14px;align-items:stretch;
+}
+.settings h2{margin:0;font-size:1.15rem;text-align:center;font-weight:800;transform:translateZ(18px)}
+.timeval{text-align:center;font-weight:900;font-size:clamp(3.2rem,15vw,4.6rem);line-height:1;color:var(--pink-d);transform:translateZ(40px);text-shadow:0 4px 0 rgba(0,0,0,.12)}
+.timeval small{font-size:.38em;margin-left:4px;color:var(--ink)}
+.slider-box{transform:translateZ(24px)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:18px;border-radius:99px;margin:10px 0 4px;
+  background:linear-gradient(to right,var(--pink) var(--pct,30%),#D6D8C8 var(--pct,30%));outline-offset:6px;cursor:pointer;touch-action:pan-y}
+input[type=range]::-webkit-slider-runnable-track{height:18px;background:transparent}
+input[type=range]::-moz-range-track{height:18px;background:transparent}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:38px;height:38px;margin-top:-10px;border-radius:50%;background:#fff;border:6px solid var(--pink-d);box-shadow:0 4px 0 var(--pink-d),0 8px 10px rgba(0,0,0,.25)}
+input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#fff;border:6px solid var(--pink-d);box-shadow:0 4px 0 var(--pink-d)}
+.range-lbl{display:flex;justify-content:space-between;font-size:.85rem;font-weight:700;color:#5b665f}
+.presets{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;transform:translateZ(14px)}
+.chip{border:2px solid var(--board);background:#fff;color:var(--board);border-radius:99px;padding:6px 14px;font-weight:800;font-size:.9rem;cursor:pointer;min-height:36px}
+.chip.on{background:var(--board);color:var(--chalk)}
+.start-wrap{transform:translateZ(36px);text-align:center;margin-top:4px}
+.rules{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:560px}
+.rules li{background:rgba(255,255,255,.1);border:1.5px dashed rgba(247,245,236,.45);border-radius:12px;padding:7px 12px;font-size:.92rem;color:var(--chalk)}
+details.teacher{width:100%;max-width:520px;background:rgba(0,0,0,.22);border-radius:14px;padding:10px 14px;font-size:.92rem;color:var(--chalk-dim)}
+details.teacher summary{cursor:pointer;font-weight:700;color:var(--chalk)}
+details.teacher p{margin:8px 0;line-height:1.55}
+details.teacher input[type=file]{max-width:100%;color:var(--chalk)}
+details.teacher .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+#csvStatus{font-weight:700;color:var(--yellow)}
+#csvStatus.err{color:var(--red)}
+
+/* ---------- game ---------- */
+.topbar{width:100%;display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:10px;align-items:stretch}
+.stat{background:rgba(0,0,0,.28);border:2px solid rgba(247,245,236,.35);border-radius:16px;padding:8px 10px;text-align:center;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.stat .lbl{font-size:.82rem;color:var(--chalk-dim);font-weight:700}
+.stat b{font-size:clamp(1.6rem,7vw,2.3rem);font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat.timer b{color:var(--yellow)}
+.stat.timer small{font-size:.9rem;margin-left:2px;font-weight:800}
+.stat.timer.low{border-color:var(--red);animation:pulse .8s ease-in-out infinite}
+.stat.timer.low b{color:var(--red)}
+@keyframes pulse{50%{transform:scale(1.05)}}
+.stat.bump b{animation:bump .4s}
+@keyframes bump{40%{transform:scale(1.35);color:var(--yellow)}}
+#pauseTag{display:none;font-size:.75rem;color:var(--green);font-weight:800}
+.paused #pauseTag{display:block}
+.timebar{width:100%;height:12px;background:rgba(0,0,0,.3);border-radius:99px;overflow:hidden;border:1.5px solid rgba(247,245,236,.3)}
+.timebar i{display:block;height:100%;width:100%;background:var(--yellow);border-radius:99px;transition:width .12s linear,background .3s}
+.timebar.low i{background:var(--red)}
+
+.qcard{width:100%;background:rgba(0,0,0,.2);border:3px dashed rgba(247,245,236,.5);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;align-items:center;gap:12px;flex:1}
+.qtag{align-self:flex-start;background:var(--blue);color:var(--ink);font-weight:800;border-radius:99px;padding:3px 14px;font-size:.9rem}
+.front{font-size:clamp(2rem,8.2vw,3.6rem);font-weight:900;text-align:center;line-height:1.25;color:var(--yellow);text-shadow:0 3px 0 rgba(0,0,0,.3);padding:4px 0}
+.cells{display:flex;flex-wrap:wrap;gap:8px 22px;justify-content:center;max-width:100%}
+.word{display:flex;gap:5px}
+.cell{width:clamp(34px,10.5vw,56px);height:clamp(42px,12.5vw,66px);background:var(--chalk);color:var(--ink);border-radius:10px;border-bottom:5px solid #B9B8A6;
+  display:grid;place-items:center;font-size:clamp(1.3rem,5.2vw,2rem);font-weight:800;transition:transform .12s}
+.cell.filled{animation:pop .15s}
+@keyframes pop{50%{transform:scale(1.12)}}
+.cell.hint{color:var(--blue-d);background:#E3F1FD;border-bottom-color:#A9CFEC}
+.cell.cur{outline:3px solid var(--pink);outline-offset:1px}
+.cell.ok{background:var(--green);color:#fff;border-bottom-color:var(--green-d)}
+.cell.reveal{background:var(--pink);color:#fff;border-bottom-color:var(--pink-d)}
+.cells.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-9px)}40%,80%{transform:translateX(9px)}}
+#ansForm{display:flex;gap:10px;width:100%;max-width:520px;margin-top:4px}
+#ans{flex:1;min-width:0;font-size:1.25rem;padding:12px 16px;border-radius:14px;border:3px solid var(--chalk);background:#fff;color:var(--ink);font-weight:700;min-height:52px}
+#ans:read-only{background:#DDDDD2}
+.feedback{min-height:3.4em;text-align:center;font-size:clamp(1rem,3.6vw,1.2rem);font-weight:700;line-height:1.5;color:var(--chalk);max-width:34em}
+.feedback.good{color:var(--green)} .feedback.bad{color:var(--pink)} .feedback.tip{color:var(--blue)}
+.feedback .mean{display:block;font-weight:500;color:var(--chalk-dim);font-size:.92em}
+.actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.quit{align-self:flex-start;background:none;border:0;color:var(--chalk-dim);font-weight:700;font-size:.92rem;cursor:pointer;padding:6px 4px;text-decoration:underline}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.6);display:none;place-items:center;z-index:30}
+.overlay.on{display:grid}
+.overlay div{background:var(--chalk);color:var(--ink);padding:22px 36px;border-radius:24px;font-size:2rem;font-weight:900;border:5px solid var(--yellow);animation:pop .4s}
+
+/* ---------- result ---------- */
+.result-title{margin:0;font-size:clamp(1.8rem,7vw,2.6rem);font-weight:900;text-align:center;color:var(--yellow)}
+.result-msg{margin:0;font-size:1.15rem;color:var(--chalk);text-align:center}
+.score-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:560px}
+.score-grid .box{background:var(--chalk);color:var(--ink);border-radius:18px;padding:12px 6px;text-align:center;box-shadow:0 5px 0 #B9B8A6}
+.score-grid .box span{display:block;font-size:.85rem;font-weight:700;color:#5b665f}
+.score-grid .box b{font-size:clamp(1.8rem,8vw,2.6rem);font-weight:900;color:var(--pink-d)}
+.score-grid .box small{font-size:1rem;font-weight:800;margin-left:2px}
+.review{width:100%;max-width:640px;display:flex;flex-direction:column;gap:10px}
+.review h3{margin:6px 0 0;font-size:1.2rem}
+.item{background:rgba(0,0,0,.25);border-left:6px solid var(--pink);border-radius:12px;padding:12px 14px;line-height:1.55}
+.item.good{border-left-color:var(--green)}
+.item .full{font-size:1.15rem;font-weight:800}
+.item .full em{font-style:normal;color:var(--yellow)}
+.item .mine{font-size:.9rem;color:var(--pink);font-weight:700}
+.item .mean{font-size:.95rem;color:var(--chalk-dim)}
+.all-right{background:rgba(76,195,138,.2);border:2px solid var(--green);border-radius:14px;padding:14px;text-align:center;font-weight:800}
+.review details summary{cursor:pointer;font-weight:800;padding:6px 0}
+.review details .item{margin-top:8px}
+.result-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:8px 0 6px}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:60}
+
+@media (max-width:420px){
+  .board{border-width:8px;border-radius:16px}
+  .topbar{gap:6px}
+  #ansForm{flex-direction:column}
+  .word{gap:4px}
+}
+@media (prefers-reduced-motion:reduce){
+  .cube{animation:none;transform:rotateX(-22deg) rotateY(-30deg)}
+  .stat.timer.low,.cell.filled,.cells.shake,.stat.bump b{animation:none}
+}
+</style>
+</head>
+<body>
+<main class="board">
+
+  <!-- 시작 화면 -->
+  <section id="start" class="screen active" aria-labelledby="gameTitle">
+    <div class="scene" aria-hidden="true">
+      <div class="cube">
+        <div class="face f1">속</div><div class="face f2">담</div><div class="face f3">퀴</div>
+        <div class="face f4">즈</div><div class="face f5">?</div><div class="face f6">!</div>
+      </div>
+    </div>
+    <h1 class="title" id="gameTitle">속담 척척 퀴즈</h1>
+    <p class="lead">속담의 앞 구절을 보고 뒤 구절을 맞혀 보세요.<br>시간 안에 많이 맞힐수록 높은 점수를 받아요!</p>
+
+    <div class="tilt-wrap" id="tiltWrap">
+      <div class="settings" id="settings">
+        <h2>게임 설정 · 제한 시간</h2>
+        <div class="timeval"><span id="timeVal">120</span><small>초</small></div>
+        <div class="slider-box">
+          <input type="range" id="timeRange" min="30" max="300" step="10" value="120" aria-label="제한 시간(초)">
+          <div class="range-lbl"><span>30초</span><span>300초</span></div>
+        </div>
+        <div class="presets" id="presets">
+          <button class="chip" data-t="60" type="button">1분</button>
+          <button class="chip on" data-t="120" type="button">2분</button>
+          <button class="chip" data-t="180" type="button">3분</button>
+          <button class="chip" data-t="300" type="button">5분</button>
+        </div>
+        <div class="start-wrap"><button class="btn big pink" id="startBtn" type="button">게임 시작</button></div>
+      </div>
+    </div>
+
+    <ul class="rules">
+      <li>💡 초성 힌트는 문제마다 2번</li>
+      <li>✍️ 입력하고 Enter 키</li>
+      <li>⏸️ 정답 확인 중에는 시간이 멈춰요</li>
+    </ul>
+
+    <details class="teacher">
+      <summary>🧑‍🏫 선생님 메뉴 · 속담 파일 바꾸기</summary>
+      <p>CSV 첫 줄에 <b>앞 구절</b>, <b>뒷 구절</b>, <b>의미</b>로 시작하는 열 이름이 있으면 됩니다. 속담 50개가 기본으로 들어 있어요.</p>
+      <div class="row">
+        <input type="file" id="csvFile" accept=".csv,text/csv">
+        <button class="btn small blue" id="csvReset" type="button">기본 속담으로</button>
+      </div>
+      <p id="csvStatus" role="status"></p>
+    </details>
+  </section>
+
+  <!-- 게임 화면 -->
+  <section id="game" class="screen">
+    <button class="quit" id="quitBtn" type="button">← 그만하기</button>
+    <div class="topbar">
+      <div class="stat" id="scoreBox"><span class="lbl">현재 점수</span><b id="score">0</b></div>
+      <div class="stat timer" id="timerBox"><span class="lbl">남은 시간</span><div><b id="timeLeft">120</b><small>초</small></div><span id="pauseTag">⏸ 잠깐 멈춤</span></div>
+      <div class="stat"><span class="lbl">맞힌 개수</span><b id="correctCount">0</b></div>
+    </div>
+    <div class="timebar" id="timeBar"><i id="timeFill"></i></div>
+
+    <div class="qcard">
+      <div class="qtag" id="qtag">문제 1</div>
+      <div class="front" id="front"></div>
+            <div class="cells" id="cells" aria-label="정답 칸"></div>
+      <form id="ansForm" autocomplete="off">
+        <input id="ans" type="text" placeholder="뒷 구절을 쓰고 Enter" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="정답 입력">
+        <button class="btn green" type="submit" id="okBtn">확인</button>
+      </form>
+      <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+      <div class="actions">
+        <button class="btn blue" id="hintBtn" type="button">💡 초성 힌트 (2/2)</button>
+        <button class="btn small pink" id="passBtn" type="button">넘기기</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 결과 화면 -->
+  <section id="result" class="screen">
+    <h2 class="result-title" id="resTitle">게임 끝!</h2>
+    <p class="result-msg" id="resMsg"></p>
+    <div class="score-grid">
+      <div class="box"><span>맞힌 개수</span><b id="resCorrect">0</b><small>개</small></div>
+      <div class="box"><span>남은 시간</span><b id="resLeft">0</b><small>초</small></div>
+      <div class="box"><span>점수</span><b id="resScore">0</b><small>점</small></div>
+    </div>
+    <div class="review" id="review"></div>
+    <div class="result-actions">
+      <button class="btn pink" id="againBtn" type="button">다시 하기</button>
+      <button class="btn blue" id="homeBtn" type="button">처음으로</button>
+    </div>
+  </section>
+
+  <div class="overlay" id="overlay"><div>⏰ 시간 끝!</div></div>
+</main>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<script>
+/* 기본 속담 데이터: [번호, 속담, 앞 구절, 뒷 구절, 의미] */
+const DEFAULT_DATA = [
+[
+"1",
+"가는 말이 고와야 오는 말이 곱다",
+"가는 말이 고와야",
+"오는 말이 곱다",
+"남에게 말을 좋게 해야 남도 자신에게 좋게 말한다."
+],
+[
+"2",
+"가는 날이 장날이다",
+"가는 날이",
+"장날이다",
+"어떤 일을 하려고 나선 날에 공교롭게도 뜻밖의 일을 만난다."
+],
+[
+"3",
+"낫 놓고 기역 자도 모른다",
+"낫 놓고",
+"기역 자도 모른다",
+"매우 무식하여 아주 쉬운 글자조차 모른다는 뜻이다."
+],
+[
+"4",
+"개구리 올챙이 적 생각 못 한다",
+"개구리",
+"올챙이 적 생각 못 한다",
+"형편이 나아진 사람이 과거의 어려웠던 처지를 잊고 행동한다."
+],
+[
+"5",
+"고래 싸움에 새우 등 터진다",
+"고래 싸움에",
+"새우 등 터진다",
+"힘센 사람들끼리 다투는 바람에 약한 사람이 피해를 입는다."
+],
+[
+"6",
+"공든 탑이 무너지랴",
+"공든 탑이",
+"무너지랴",
+"정성을 들여 이루어 놓은 일은 쉽게 헛되지 않는다."
+],
+[
+"7",
+"구슬이 서 말이라도 꿰어야 보배다",
+"구슬이 서 말이라도",
+"꿰어야 보배다",
+"아무리 좋은 것이라도 알맞게 다듬고 활용해야 가치가 있다."
+],
+[
+"8",
+"그림의 떡",
+"그림의",
+"떡",
+"바라기는 하지만 실제로 차지하거나 누릴 수 없는 것을 이른다."
+],
+[
+"9",
+"금강산도 식후경",
+"금강산도",
+"식후경",
+"아무리 재미있고 좋은 일도 먼저 배가 불러야 즐길 수 있다."
+],
+[
+"10",
+"꿩 대신 닭",
+"꿩 대신",
+"닭",
+"마땅한 것이 없을 때 그와 비슷한 것으로 대신한다."
+],
+[
+"11",
+"남의 떡이 더 커 보인다",
+"남의 떡이",
+"더 커 보인다",
+"남이 가진 것이 자기 것보다 더 좋아 보인다는 뜻이다."
+],
+[
+"12",
+"낮말은 새가 듣고 밤말은 쥐가 듣는다",
+"낮말은 새가 듣고",
+"밤말은 쥐가 듣는다",
+"아무도 듣지 않는 곳이라도 말은 항상 조심해야 한다."
+],
+[
+"13",
+"누워서 침 뱉기",
+"누워서",
+"침 뱉기",
+"남을 해치려는 행동이 도리어 자신에게 해가 된다."
+],
+[
+"14",
+"하늘의 별 따기",
+"하늘의",
+"별 따기",
+"어떤 일을 이루거나 얻기가 매우 어렵다는 뜻이다."
+],
+[
+"15",
+"다 된 밥에 재 뿌리기",
+"다 된 밥에",
+"재 뿌리기",
+"거의 이루어진 일을 마지막에 망쳐 놓는 것을 이른다."
+],
+[
+"16",
+"달면 삼키고 쓰면 뱉는다",
+"달면 삼키고",
+"쓰면 뱉는다",
+"자기에게 이로우면 받아들이고 불리하면 버리는 이기적인 태도를 이른다."
+],
+[
+"17",
+"도둑이 제 발 저리다",
+"도둑이",
+"제 발 저리다",
+"잘못을 저지른 사람이 스스로 불안해하며 의심을 드러낸다."
+],
+[
+"18",
+"돌다리도 두들겨 보고 건너라",
+"돌다리도",
+"두들겨 보고 건너라",
+"아무리 안전하고 확실해 보이는 일도 신중히 확인해야 한다."
+],
+[
+"19",
+"되로 주고 말로 받는다",
+"되로 주고",
+"말로 받는다",
+"남에게 작은 해를 끼쳤다가 오히려 더 큰 해를 입는다."
+],
+[
+"20",
+"등잔 밑이 어둡다",
+"등잔 밑이",
+"어둡다",
+"가까이에 있는 일이나 사실을 오히려 알아차리지 못한다."
+],
+[
+"21",
+"땅 짚고 헤엄치기",
+"땅 짚고",
+"헤엄치기",
+"일이 매우 쉽거나 성공이 확실한 경우를 이른다."
+],
+[
+"22",
+"뛰는 놈 위에 나는 놈 있다",
+"뛰는 놈 위에",
+"나는 놈 있다",
+"아무리 재주가 뛰어나도 그보다 더 뛰어난 사람이 있다."
+],
+[
+"23",
+"말 한마디에 천 냥 빚도 갚는다",
+"말 한마디에",
+"천 냥 빚도 갚는다",
+"말을 슬기롭게 하면 큰 어려움이나 빚도 해결할 수 있다."
+],
+[
+"24",
+"모로 가도 서울만 가면 된다",
+"모로 가도",
+"서울만 가면 된다",
+"방법이나 과정이 어떠하든 목적만 달성하면 된다는 뜻이다."
+],
+[
+"25",
+"믿는 도끼에 발등 찍힌다",
+"믿는 도끼에",
+"발등 찍힌다",
+"믿고 의지하던 사람에게 뜻밖의 배신이나 피해를 당한다."
+],
+[
+"26",
+"바늘 도둑이 소 도둑 된다",
+"바늘 도둑이",
+"소 도둑 된다",
+"작은 나쁜 버릇을 고치지 않으면 나중에 큰 잘못을 저지르게 된다."
+],
+[
+"27",
+"발 없는 말이 천 리 간다",
+"발 없는 말이",
+"천 리 간다",
+"말이나 소문은 매우 빠르게 멀리까지 퍼진다."
+],
+[
+"28",
+"배보다 배꼽이 더 크다",
+"배보다",
+"배꼽이 더 크다",
+"주된 것보다 부수적인 것이 더 크거나 중요해지는 경우를 이른다."
+],
+[
+"29",
+"백지장도 맞들면 낫다",
+"백지장도",
+"맞들면 낫다",
+"아무리 쉬운 일이라도 함께 힘을 보태면 더 낫다."
+],
+[
+"30",
+"벼는 익을수록 고개를 숙인다",
+"벼는 익을수록",
+"고개를 숙인다",
+"훌륭하고 아는 것이 많은 사람일수록 겸손하게 행동한다."
+],
+[
+"31",
+"병 주고 약 준다",
+"병 주고",
+"약 준다",
+"남에게 해를 끼쳐 놓고 뒤늦게 도와주는 척한다."
+],
+[
+"32",
+"불난 집에 부채질한다",
+"불난 집에",
+"부채질한다",
+"남의 어려운 처지를 더욱 곤란하게 만든다."
+],
+[
+"33",
+"빈 수레가 요란하다",
+"빈 수레가",
+"요란하다",
+"아는 것이나 실속이 없는 사람이 오히려 더 떠들어 댄다."
+],
+[
+"34",
+"사공이 많으면 배가 산으로 간다",
+"사공이 많으면",
+"배가 산으로 간다",
+"간섭하거나 지시하는 사람이 너무 많으면 일이 제대로 되지 않는다."
+],
+[
+"35",
+"세 살 버릇 여든까지 간다",
+"세 살 버릇",
+"여든까지 간다",
+"어릴 때 든 버릇은 나이가 들어서도 고치기 어렵다."
+],
+[
+"36",
+"소 잃고 외양간 고친다",
+"소 잃고",
+"외양간 고친다",
+"일이 잘못된 뒤에야 뒤늦게 대비책을 세우는 어리석음을 이른다."
+],
+[
+"37",
+"시작이 반이다",
+"시작이",
+"반이다",
+"어떤 일이든 시작하기가 어렵지 일단 시작하면 상당 부분을 해낸 셈이다."
+],
+[
+"38",
+"아니 땐 굴뚝에 연기 날까",
+"아니 땐 굴뚝에",
+"연기 날까",
+"아무런 원인도 없이 어떤 결과나 소문이 생기지는 않는다는 뜻이다."
+],
+[
+"39",
+"하룻강아지 범 무서운 줄 모른다",
+"하룻강아지",
+"범 무서운 줄 모른다",
+"철없이 덤비면서 자기보다 훨씬 강한 상대의 무서움을 모른다."
+],
+[
+"40",
+"열 번 찍어 안 넘어가는 나무 없다",
+"열 번 찍어",
+"안 넘어가는 나무 없다",
+"끈질기게 노력하거나 시도하면 마침내 목적을 이룰 수 있다."
+],
+[
+"41",
+"원숭이도 나무에서 떨어진다",
+"원숭이도",
+"나무에서 떨어진다",
+"아무리 능숙하고 뛰어난 사람도 때로는 실수할 수 있다."
+],
+[
+"42",
+"우물 안 개구리",
+"우물 안",
+"개구리",
+"견문이 좁아 넓은 세상의 형편을 알지 못하는 사람을 이른다."
+],
+[
+"43",
+"웃는 얼굴에 침 못 뱉는다",
+"웃는 얼굴에",
+"침 못 뱉는다",
+"좋은 얼굴과 태도로 대하는 사람에게는 함부로 대하기 어렵다."
+],
+[
+"44",
+"윗물이 맑아야 아랫물이 맑다",
+"윗물이 맑아야",
+"아랫물이 맑다",
+"윗사람이 바르고 모범을 보여야 아랫사람도 바르게 행동한다."
+],
+[
+"45",
+"자라 보고 놀란 가슴 솥뚜껑 보고 놀란다",
+"자라 보고 놀란 가슴",
+"솥뚜껑 보고 놀란다",
+"한 번 크게 놀란 사람은 비슷한 것만 보아도 겁을 낸다."
+],
+[
+"46",
+"작은 고추가 맵다",
+"작은 고추가",
+"맵다",
+"몸집이 작아도 재주나 능력이 뛰어날 수 있다."
+],
+[
+"47",
+"하나를 보면 열을 안다",
+"하나를 보면",
+"열을 안다",
+"한 가지 일을 보고 다른 여러 가지 일까지 미루어 알 수 있다."
+],
+[
+"48",
+"천 리 길도 한 걸음부터",
+"천 리 길도",
+"한 걸음부터",
+"아무리 큰일이라도 작은 일부터 시작해야 이룰 수 있다."
+],
+[
+"49",
+"티끌 모아 태산",
+"티끌 모아",
+"태산",
+"아주 작은 것도 계속 모으면 큰 것이 된다."
+],
+[
+"50",
+"호랑이도 제 말 하면 온다",
+"호랑이도",
+"제 말 하면 온다",
+"어떤 사람에 관한 이야기를 하고 있는데 마침 그 사람이 나타난다."
+]
+];
+
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const CHO = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const cho = ch => { const c = ch.charCodeAt(0); return (c >= 0xAC00 && c <= 0xD7A3) ? CHO[Math.floor((c - 0xAC00) / 588)] : ch; };
+const norm = s => String(s).normalize('NFC').replace(/[\s.,!?'"“”‘’~·\-]/g, '');
+const BASE = 10, HINT_COST = 2, MAX_HINTS = 2, NEXT_DELAY = 2000;
+
+const toQ = r => ({no:r[0], full:r[1], front:r[2], back:r[3], meaning:r[4]});
+let QS = DEFAULT_DATA.map(toQ);
+
+const S = {mode:'idle', total:120, left:120, score:0, correct:0, deck:[], pos:0, q:null, hints:0,
+           wrong:new Map(), right:[], cells:[], last:0, lastSubmit:0, timeout:0, reason:''};
+
+/* ---------- 화면 전환 ---------- */
+function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id)); window.scrollTo(0,0); }
+
+/* ---------- 시작 화면 ---------- */
+const range = $('timeRange');
+function syncRange(){
+  const v = +range.value;
+  $('timeVal').textContent = v;
+  range.style.setProperty('--pct', ((v - 30) / 270 * 100) + '%');
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', +c.dataset.t === v));
+}
+range.addEventListener('input', syncRange);
+document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => { range.value = c.dataset.t; syncRange(); }));
+syncRange();
+
+// 3D 기울기 카드
+const settings = $('settings'), wrap = $('tiltWrap');
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+wrap.addEventListener('pointermove', e => {
+  if (reduce || e.pointerType === 'touch') return;
+  const r = wrap.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+  settings.style.transform = `rotateY(${x * 12}deg) rotateX(${-y * 10}deg)`;
+});
+wrap.addEventListener('pointerleave', () => { settings.style.transform = ''; });
+
+/* ---------- CSV ---------- */
+function parseCSV(t){
+  t = t.replace(/^\uFEFF/, '');
+  const rows = []; let row = [], cur = '', q = false;
+  for (let i = 0; i < t.length; i++){
+    const c = t[i];
+    if (q){
+      if (c === '"'){ if (t[i+1] === '"'){ cur += '"'; i++; } else q = false; }
+      else cur += c;
+    } else if (c === '"') q = true;
+    else if (c === ','){ row.push(cur); cur = ''; }
+    else if (c === '\n' || c === '\r'){
+      if (c === '\r' && t[i+1] === '\n') i++;
+      row.push(cur); cur = ''; if (row.some(x => x.trim())) rows.push(row); row = [];
+    } else cur += c;
+  }
+  row.push(cur); if (row.some(x => x.trim())) rows.push(row);
+  return rows;
+}
+function rowsToQ(rows){
+  const h = rows[0].map(x => x.trim());
+  const iF = h.findIndex(x => x.replace(/\s/g,'').startsWith('앞구절'));
+  const iB = h.findIndex(x => x.replace(/\s/g,'').startsWith('뒷구절'));
+  const iM = h.findIndex(x => x.startsWith('의미'));
+  const iN = h.findIndex(x => x.startsWith('번호'));
+  if (iF < 0 || iB < 0) throw new Error('열 이름에 "앞 구절"과 "뒷 구절"이 있어야 해요.');
+  const out = [];
+  rows.slice(1).forEach((r, i) => {
+    const f = (r[iF] || '').trim(), b = (r[iB] || '').trim();
+    if (!f || !b) return;
+    out.push({no: iN >= 0 && r[iN] ? r[iN].trim() : String(i + 1), full: f + ' ' + b, front: f, back: b, meaning: iM >= 0 ? (r[iM] || '').trim() : ''});
+  });
+  if (!out.length) throw new Error('사용할 수 있는 속담이 없어요.');
+  return out;
+}
+function setStatus(msg, err){ const s = $('csvStatus'); s.textContent = msg; s.classList.toggle('err', !!err); }
+$('csvFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const buf = await f.arrayBuffer(); let text;
+    try { text = new TextDecoder('utf-8', {fatal:true}).decode(buf); }
+    catch(_) { text = new TextDecoder('euc-kr').decode(buf); }
+    QS = rowsToQ(parseCSV(text));
+    setStatus(`✅ "${f.name}" 에서 속담 ${QS.length}개를 불러왔어요.`);
+  } catch(err){ setStatus('⚠️ ' + err.message, true); }
+  e.target.value = '';
+});
+$('csvReset').addEventListener('click', () => { QS = DEFAULT_DATA.map(toQ); setStatus(`기본 속담 ${QS.length}개로 돌아왔어요.`); });
+setStatus(`현재 속담 ${QS.length}개가 준비되어 있어요.`);
+
+/* ---------- 폭죽 ---------- */
+const cv = $('confetti'), cx = cv.getContext('2d');
+let parts = [], raf = 0, tPrev = 0;
+function sizeCv(){ const d = window.devicePixelRatio || 1; cv.width = innerWidth * d; cv.height = innerHeight * d; cx.setTransform(d,0,0,d,0,0); }
+window.addEventListener('resize', sizeCv); sizeCv();
+function burst(){
+  const W = innerWidth, H = innerHeight, cols = ['#FFD84D','#FF7F96','#6CBBF7','#4CC38A','#FFFFFF','#B58CFF','#FF9F43'];
+  const n = reduce ? 30 : 70;
+  [[W*.18,H*.62,.35],[W*.82,H*.62,-.35],[W*.5,H*.45,0]].forEach(([x,y,bias]) => {
+    for (let i = 0; i < n; i++){
+      const a = -Math.PI/2 + (Math.random() - .5) * 1.7 + bias, v = 7 + Math.random() * 10;
+      parts.push({x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v, s:6 + Math.random()*8, r:Math.random()*6, vr:(Math.random()-.5)*.4,
+                  c:cols[Math.random()*cols.length|0], round:Math.random() < .3, age:0});
+    }
+  });
+  if (!raf){ tPrev = performance.now(); raf = requestAnimationFrame(frame); }
+}
+function frame(t){
+  const dt = Math.min(2, (t - tPrev) / 16.7); tPrev = t;
+  cx.clearRect(0, 0, innerWidth, innerHeight);
+  parts = parts.filter(p => p.age < 140 && p.y < innerHeight + 30);
+  parts.forEach(p => {
+    p.age += dt; p.vy += .28 * dt; p.vx *= .992; p.x += p.vx * dt; p.y += p.vy * dt; p.r += p.vr * dt;
+    cx.save(); cx.globalAlpha = Math.max(0, Math.min(1, (140 - p.age) / 40));
+    cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c;
+    if (p.round){ cx.beginPath(); cx.arc(0, 0, p.s/2, 0, 7); cx.fill(); } else cx.fillRect(-p.s/2, -p.s/3, p.s, p.s*.66);
+    cx.restore();
+  });
+  raf = parts.length ? requestAnimationFrame(frame) : 0;
+  if (!raf) cx.clearRect(0, 0, innerWidth, innerHeight);
+}
+
+/* ---------- 게임 ---------- */
+const ans = $('ans'), cellsEl = $('cells'), fb = $('feedback');
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--){ const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+function startGame(){
+  clearTimeout(S.timeout);
+  S.total = S.left = +range.value; S.score = 0; S.correct = 0; S.pos = 0; S.hints = 0;
+  S.wrong = new Map(); S.right = []; S.reason = '';
+  S.deck = shuffle(QS.map((_, i) => i));
+  $('score').textContent = 0; $('correctCount').textContent = 0;
+  updateTime();
+  show('game');
+  nextQuestion();
+  S.last = performance.now();
+}
+function nextQuestion(){
+  if (S.pos >= S.deck.length){ endGame('all'); return; }
+  S.q = QS[S.deck[S.pos++]]; S.hints = 0;
+  $('qtag').textContent = `문제 ${S.pos}`;
+  $('front').textContent = S.q.front;
+  buildCells();
+  ans.value = ''; ans.readOnly = false;
+  fb.className = 'feedback'; fb.innerHTML = '';
+  $('timerBox').classList.remove('paused');
+  S.mode = 'playing';
+  setBtns(true); updateHintBtn(); updateCells();
+  S.last = performance.now();
+  ans.focus({preventScroll:true});
+}
+function buildCells(){
+  cellsEl.innerHTML = ''; S.cells = [];
+  S.q.back.trim().split(/\s+/).forEach((w, wi) => {
+    const g = document.createElement('div'); g.className = 'word';
+    Array.from(w).forEach(ch => { const c = document.createElement('div'); c.className = 'cell'; g.appendChild(c); S.cells.push({el:c, ch, w:wi}); });
+    cellsEl.appendChild(g);
+  });
+}
+function updateCells(){
+  if (S.mode !== 'playing') return;
+  const typed = Array.from(ans.value.replace(/\s+/g, ''));
+  S.cells.forEach((c, i) => {
+    const t = typed[i], was = c.el.textContent;
+    c.el.className = 'cell';
+    if (t){ c.el.textContent = t; c.el.classList.add('filled'); if (was === t) c.el.classList.remove('filled'); }
+    else if (S.hints >= 2 || (S.hints >= 1 && c.w === 0)){ c.el.textContent = cho(c.ch); c.el.classList.add('hint'); }
+    else c.el.textContent = '';
+    if (i === typed.length) c.el.classList.add('cur');
+  });
+}
+function setBtns(on){ $('hintBtn').disabled = !on || S.hints >= MAX_HINTS; $('passBtn').disabled = !on; $('okBtn').disabled = !on; }
+function updateHintBtn(){ $('hintBtn').textContent = `💡 초성 힌트 (${MAX_HINTS - S.hints}/${MAX_HINTS})`; $('hintBtn').disabled = S.mode !== 'playing' || S.hints >= MAX_HINTS; }
+function say(html, cls){ fb.className = 'feedback ' + (cls || ''); fb.innerHTML = html; }
+
+function useHint(){
+  if (S.mode !== 'playing' || S.hints >= MAX_HINTS) return;
+  S.hints++; updateHintBtn(); updateCells();
+  say(S.hints === 1 ? '💡 첫 번째 낱말의 초성이에요!' : '💡 전체 초성이에요! 파란 글자가 힌트예요.', 'tip');
+  ans.focus({preventScroll:true});
+}
+function submit(){
+  if (S.mode !== 'playing') return;
+  const now = performance.now(); if (now - S.lastSubmit < 300) return; S.lastSubmit = now;
+  const typed = norm(ans.value);
+  if (!typed){ shake(); say('정답을 입력해 주세요.', 'bad'); return; }
+  if (typed === norm(S.q.back)) return onCorrect();
+  S.wrong.set(S.q.no, {q:S.q, mine:ans.value.trim()});
+  shake(); say('아쉬워요! 다시 한 번 생각해 볼까요?', 'bad');
+  ans.select();
+}
+function shake(){ cellsEl.classList.remove('shake'); void cellsEl.offsetWidth; cellsEl.classList.add('shake'); }
+function lock(){ S.mode = 'locked'; ans.readOnly = true; ans.blur(); setBtns(false); $('timerBox').classList.add('paused'); }
+function fillCells(cls){ Array.from(S.q.back.replace(/\s+/g, '')).forEach((ch, i) => { const c = S.cells[i]; if (c){ c.el.className = 'cell ' + cls; c.el.textContent = ch; } }); }
+
+function onCorrect(){
+  lock();
+  const pts = Math.max(BASE - HINT_COST * S.hints, 4);
+  S.score += pts; S.correct++; S.right.push(S.q); S.wrong.delete(S.q.no);
+  $('score').textContent = S.score; $('correctCount').textContent = S.correct;
+  bump($('scoreBox'));
+  fillCells('ok');
+  say(`🎉 정답! +${pts}점${S.q.meaning ? `<span class="mean">${esc(S.q.meaning)}</span>` : ''}`, 'good');
+  burst();
+  S.timeout = setTimeout(nextQuestion, NEXT_DELAY);
+}
+function onPass(){
+  if (S.mode !== 'playing') return;
+  lock();
+  if (!S.wrong.has(S.q.no)) S.wrong.set(S.q.no, {q:S.q, mine:''});
+  fillCells('reveal');
+  say(`정답은 「${esc(S.q.full)}」 이에요.${S.q.meaning ? `<span class="mean">${esc(S.q.meaning)}</span>` : ''}`, 'bad');
+  S.timeout = setTimeout(nextQuestion, NEXT_DELAY);
+}
+function bump(el){ el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+
+/* ---------- 타이머 (정답 확인 중에는 흐르지 않음) ---------- */
+function updateTime(){
+  const sec = Math.max(0, Math.ceil(S.left));
+  $('timeLeft').textContent = sec;
+  $('timeFill').style.width = (S.left / S.total * 100) + '%';
+  const low = S.left <= 10;
+  $('timerBox').classList.toggle('low', low); $('timeBar').classList.toggle('low', low);
+}
+setInterval(() => {
+  const now = performance.now();
+  if (S.mode === 'playing'){
+    S.left -= Math.min(1, (now - S.last) / 1000);
+    if (S.left <= 0){ S.left = 0; updateTime(); timeUp(); }
+    else updateTime();
+  }
+  S.last = now;
+}, 100);
+function timeUp(){
+  S.mode = 'over'; ans.readOnly = true; ans.blur();
+  if (S.q && !S.wrong.has(S.q.no)) S.wrong.set(S.q.no, {q:S.q, mine:''});
+  $('overlay').classList.add('on');
+  S.timeout = setTimeout(() => { $('overlay').classList.remove('on'); endGame('time'); }, 1400);
+}
+
+/* ---------- 결과 ---------- */
+function endGame(reason){
+  clearTimeout(S.timeout);
+  S.mode = 'ended'; S.reason = reason;
+  $('resTitle').textContent = reason === 'time' ? '⏰ 시간 끝!' : '🎊 모든 속담 완료!';
+  $('resMsg').textContent = S.correct >= 20 ? '🏆 속담 박사님이에요!' : S.correct >= 10 ? '🌟 정말 잘했어요!' : S.correct >= 1 ? '👍 잘했어요! 틀린 속담을 다시 읽어 봐요.' : '💪 괜찮아요! 해설을 읽고 다시 도전해요.';
+  $('resCorrect').textContent = S.correct; $('resLeft').textContent = Math.max(0, Math.ceil(S.left)); $('resScore').textContent = S.score;
+  const wr = Array.from(S.wrong.values());
+  let h = `<h3>📝 틀린 속담 해설 (${wr.length}개)</h3>`;
+  if (!wr.length) h += '<div class="all-right">🎉 틀린 속담이 하나도 없어요! 완벽해요!</div>';
+  wr.forEach(({q, mine}) => {
+    h += `<div class="item"><div class="full">${esc(q.front)} <em>${esc(q.back)}</em></div>` +
+         (mine ? `<div class="mine">내가 쓴 답: ${esc(mine)}</div>` : '<div class="mine">답을 맞히지 못했어요</div>') +
+         (q.meaning ? `<div class="mean">뜻: ${esc(q.meaning)}</div>` : '') + '</div>';
+  });
+  if (S.right.length){
+    h += `<details><summary>✅ 맞힌 속담 보기 (${S.right.length}개)</summary>` +
+      S.right.map(q => `<div class="item good"><div class="full">${esc(q.full)}</div>${q.meaning ? `<div class="mean">뜻: ${esc(q.meaning)}</div>` : ''}</div>`).join('') + '</details>';
+  }
+  $('review').innerHTML = h;
+  show('result');
+  if (S.correct >= 1) setTimeout(burst, 250);
+}
+
+/* ---------- 이벤트 ---------- */
+$('startBtn').addEventListener('click', startGame);
+$('againBtn').addEventListener('click', startGame);
+$('homeBtn').addEventListener('click', () => { S.mode = 'idle'; show('start'); });
+$('quitBtn').addEventListener('click', () => {
+  if (confirm('게임을 그만두고 처음 화면으로 갈까요?')){ clearTimeout(S.timeout); S.mode = 'idle'; $('overlay').classList.remove('on'); show('start'); }
+});
+$('hintBtn').addEventListener('click', useHint);
+$('passBtn').addEventListener('click', onPass);
+['hintBtn','passBtn','okBtn'].forEach(id => $(id).addEventListener('mousedown', e => e.preventDefault())); // 입력창 포커스 유지
+ans.addEventListener('input', updateCells);
+ans.addEventListener('compositionupdate', () => setTimeout(updateCells, 0));
+ans.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); submit(); } });
+$('ansForm').addEventListener('submit', e => { e.preventDefault(); submit(); });
+cellsEl.addEventListener('click', () => { if (S.mode === 'playing') ans.focus(); });
+ans.addEventListener('focus', () => setTimeout(() => ans.scrollIntoView({block:'center', behavior:'smooth'}), 300));
+})();
+</script>
+</body>
+</html>
